@@ -1,0 +1,4 @@
+project_id = "gitwbyztsdpuegwbkpfd"
+
+[functions.scrape-and-reform]
+verify_jwt = false
