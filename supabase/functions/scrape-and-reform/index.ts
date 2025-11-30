@@ -6,38 +6,84 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface SiteEntry {
+  category: string;
+  siteName: string;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { url, prompt } = await req.json();
+    const { sites, prompt, useAI } = await req.json();
 
-    if (!url || !prompt) {
-      throw new Error("URL and prompt are required");
+    if (!sites || !Array.isArray(sites) || sites.length === 0) {
+      throw new Error("Sites array is required");
     }
 
-    console.log("Scraping URL:", url);
-
-    // Fetch the website content
-    const websiteResponse = await fetch(url);
-    if (!websiteResponse.ok) {
-      throw new Error(`Failed to fetch website: ${websiteResponse.statusText}`);
+    if (useAI && !prompt) {
+      throw new Error("Prompt is required when AI reformulation is enabled");
     }
 
-    const html = await websiteResponse.text();
-    
-    // Extract text content from HTML (simple text extraction)
-    const textContent = html
-      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 10000); // Limit content to avoid token limits
+    console.log(`Scraping ${sites.length} sites, AI reformulation: ${useAI}`);
 
-    console.log("Extracted text length:", textContent.length);
+    const scrapedContent: string[] = [];
+
+    // Scrape each site
+    for (const site of sites as SiteEntry[]) {
+      try {
+        console.log(`Scraping: ${site.siteName}`);
+        
+        // Add protocol if missing
+        let url = site.siteName;
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+          url = "https://" + url;
+        }
+
+        const websiteResponse = await fetch(url, {
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; ScrapReform/1.0)",
+          },
+        });
+
+        if (!websiteResponse.ok) {
+          console.error(`Failed to fetch ${url}: ${websiteResponse.statusText}`);
+          scrapedContent.push(`[${site.category}] ${site.siteName}: Erreur de récupération`);
+          continue;
+        }
+
+        const html = await websiteResponse.text();
+        
+        // Extract text content from HTML
+        const textContent = html
+          .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+          .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 5000); // Limit per site
+
+        scrapedContent.push(`[${site.category}] ${site.siteName}:\n${textContent}\n\n---\n\n`);
+      } catch (error) {
+        console.error(`Error scraping ${site.siteName}:`, error);
+        scrapedContent.push(`[${site.category}] ${site.siteName}: Erreur lors du scraping\n\n---\n\n`);
+      }
+    }
+
+    const combinedContent = scrapedContent.join("");
+
+    // If AI is disabled, return raw content
+    if (!useAI) {
+      console.log("Returning raw scraped content");
+      return new Response(
+        JSON.stringify({ result: combinedContent }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
 
     // Use Lovable AI to reformulate
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -62,7 +108,7 @@ serve(async (req) => {
           },
           {
             role: "user",
-            content: `Voici le contenu d'un site web:\n\n${textContent}\n\nInstruction: ${prompt}`,
+            content: `Voici le contenu scrappé de plusieurs sites web:\n\n${combinedContent}\n\nInstruction: ${prompt}`,
           },
         ],
       }),
