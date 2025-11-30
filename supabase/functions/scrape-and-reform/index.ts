@@ -46,7 +46,7 @@ serve(async (req) => {
 
         if (!websiteResponse.ok) {
           console.error(`Failed to fetch ${url}: ${websiteResponse.statusText}`);
-          scrapedContent.push(`[${site.category}] ${site.siteName}: Erreur de récupération`);
+          scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n❌ Erreur: ${websiteResponse.statusText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
           continue;
         }
 
@@ -61,10 +61,11 @@ serve(async (req) => {
           .trim()
           .slice(0, 5000); // Limit per site
 
-        scrapedContent.push(`[${site.category}] ${site.siteName}:\n${textContent}\n\n---\n\n`);
+        scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n\n${textContent}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
       } catch (error) {
         console.error(`Error scraping ${site.siteName}:`, error);
-        scrapedContent.push(`[${site.category}] ${site.siteName}: Erreur lors du scraping\n\n---\n\n`);
+        const url = site.siteName.startsWith("http") ? site.siteName : "https://" + site.siteName;
+        scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n❌ Erreur lors du scraping\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
       }
     }
 
@@ -113,11 +114,11 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that reformulates web content based on user instructions. Always respond in French.",
+            content: "You are a helpful assistant that reformulates web content based on user instructions. Always respond in French. IMPORTANT: Always include the source URL for each piece of information you reference.",
           },
           {
             role: "user",
-            content: `Voici le contenu scrappé de plusieurs sites web:\n\n${combinedContent}\n\nInstruction: ${prompt}`,
+            content: `Voici le contenu scrappé de plusieurs sites web avec leurs URLs:\n\n${combinedContent}\n\nInstruction: ${prompt}\n\nIMPORTANT: Dans ta réponse, cite toujours la source avec son URL (🔗) pour chaque information que tu mentionnes.`,
           },
         ],
       }),
