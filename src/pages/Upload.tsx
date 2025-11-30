@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Loader2 } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
 
 interface SiteEntry {
+  id?: string;
   category: string;
   siteName: string;
 }
@@ -16,6 +18,31 @@ export default function Upload() {
   const [isLoading, setIsLoading] = useState(false);
   const [sites, setSites] = useState<SiteEntry[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadSites();
+  }, []);
+
+  const loadSites = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("scraped_sites")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const formattedSites = data.map((site: any) => ({
+        id: site.id,
+        category: site.category,
+        siteName: site.site_name,
+      }));
+
+      setSites(formattedSites);
+    } catch (error) {
+      console.error("Error loading sites:", error);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -71,20 +98,63 @@ export default function Upload() {
           description: "Le fichier ne contient pas de colonnes 'category' et 'siteName'",
           variant: "destructive",
         });
-      } else {
-        setSites(parsedSites);
-        // Save to localStorage for use in Prompt page
-        localStorage.setItem("scraped-sites", JSON.stringify(parsedSites));
-        toast({
-          title: "Succès",
-          description: `${parsedSites.length} sites importés avec succès`,
-        });
+        return;
       }
+
+      // Save to database
+      const sitesToInsert = parsedSites.map(site => ({
+        category: site.category,
+        site_name: site.siteName,
+      }));
+
+      const { error } = await supabase
+        .from("scraped_sites")
+        .insert(sitesToInsert);
+
+      if (error) throw error;
+
+      await loadSites();
+      
+      toast({
+        title: "Succès",
+        description: `${parsedSites.length} sites importés et enregistrés`,
+      });
     } catch (error) {
       console.error("Error processing file:", error);
       toast({
         title: "Erreur",
         description: "Impossible de traiter le fichier",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClearAll = async () => {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer tous les sites ?")) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("scraped_sites")
+        .delete()
+        .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all
+
+      if (error) throw error;
+
+      setSites([]);
+      toast({
+        title: "Succès",
+        description: "Tous les sites ont été supprimés",
+      });
+    } catch (error) {
+      console.error("Error clearing sites:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer les sites",
         variant: "destructive",
       });
     } finally {
@@ -158,10 +228,20 @@ export default function Upload() {
 
           {sites.length > 0 && (
             <Card className="border-border overflow-hidden">
-              <div className="p-6 border-b border-border bg-card">
+              <div className="p-6 border-b border-border bg-card flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-foreground">
-                  Sites importés ({sites.length})
+                  Sites enregistrés ({sites.length})
                 </h2>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleClearAll}
+                  disabled={isLoading}
+                  className="hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Tout supprimer
+                </Button>
               </div>
               <div className="max-h-96 overflow-auto">
                 <table className="w-full">
@@ -177,7 +257,7 @@ export default function Upload() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {sites.map((site, index) => (
-                      <tr key={index} className="hover:bg-secondary/50 transition-colors">
+                      <tr key={site.id || index} className="hover:bg-secondary/50 transition-colors">
                         <td className="px-6 py-4 text-sm text-foreground">{site.category}</td>
                         <td className="px-6 py-4 text-sm text-primary">{site.siteName}</td>
                       </tr>

@@ -18,6 +18,7 @@ interface SiteEntry {
 export default function Prompt() {
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingSites, setLoadingSites] = useState(true);
   const [result, setResult] = useState("");
   const [useAI, setUseAI] = useState(true);
   const [sites, setSites] = useState<SiteEntry[]>([]);
@@ -25,12 +26,36 @@ export default function Prompt() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load sites from localStorage
-    const savedSites = localStorage.getItem("scraped-sites");
-    if (savedSites) {
-      setSites(JSON.parse(savedSites));
-    }
+    loadSites();
   }, []);
+
+  const loadSites = async () => {
+    setLoadingSites(true);
+    try {
+      const { data, error } = await supabase
+        .from("scraped_sites")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      const formattedSites = data.map((site: any) => ({
+        category: site.category,
+        siteName: site.site_name,
+      }));
+
+      setSites(formattedSites);
+    } catch (error) {
+      console.error("Error loading sites:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les sites",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSites(false);
+    }
+  };
 
   const categories = Array.from(new Set(sites.map(s => s.category))).filter(Boolean);
 
@@ -40,6 +65,14 @@ export default function Prompt() {
         ? prev.filter(c => c !== category)
         : [...prev, category]
     );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCategories.length === categories.length) {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([...categories]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -99,6 +132,20 @@ export default function Prompt() {
     }
   };
 
+  if (loadingSites) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="pt-24 px-4 pb-12">
+          <div className="max-w-4xl mx-auto text-center">
+            <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
+            <p className="mt-4 text-muted-foreground">Chargement des sites...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   if (sites.length === 0) {
     return (
       <div className="min-h-screen bg-background">
@@ -108,7 +155,7 @@ export default function Prompt() {
             <Card className="p-12 border-border">
               <Zap className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h2 className="text-2xl font-semibold text-foreground mb-2">
-                Aucun site importé
+                Aucun site enregistré
               </h2>
               <p className="text-muted-foreground mb-6">
                 Veuillez d'abord importer un fichier Excel sur la page Import
@@ -147,9 +194,20 @@ export default function Prompt() {
             <Card className="border-border p-6">
               <div className="space-y-6">
                 <div>
-                  <label className="text-sm font-medium text-foreground mb-3 block">
-                    Catégories ({selectedCategories.length} sélectionnée{selectedCategories.length > 1 ? 's' : ''})
-                  </label>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-sm font-medium text-foreground">
+                      Catégories ({selectedCategories.length} sélectionnée{selectedCategories.length > 1 ? 's' : ''})
+                    </label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSelectAll}
+                      className="text-xs"
+                    >
+                      {selectedCategories.length === categories.length ? "Tout désélectionner" : "Tout sélectionner"}
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {categories.map((category) => (
                       <div
