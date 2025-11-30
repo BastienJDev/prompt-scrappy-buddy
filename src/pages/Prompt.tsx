@@ -297,9 +297,9 @@ export default function Prompt() {
                     <h2 className="text-xl font-semibold text-foreground">Résultat</h2>
                   </div>
                 </div>
-                <div className="p-6">
+                <div className="p-6 max-h-[600px] overflow-auto">
                   <div className="prose prose-invert max-w-none">
-                    <div className="whitespace-pre-wrap text-foreground leading-relaxed">
+                    <div className="whitespace-pre-wrap text-foreground leading-relaxed font-mono text-sm">
                       {result}
                     </div>
                   </div>
