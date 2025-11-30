@@ -251,12 +251,12 @@ export default function Prompt() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground block">
-                    {useAI ? "Prompt de reformulation" : "Instructions de scraping"}
+                    {useAI ? "Que recherchez-vous ?" : "Instructions de scraping"}
                   </label>
                   <Textarea
                     placeholder={
                       useAI
-                        ? "Comment souhaitez-vous reformuler le contenu ? Ex: Résume ce texte en 3 points clés..."
+                        ? "Décrivez précisément ce que vous cherchez. Ex: Les horaires d'ouverture, les prix, les coordonnées de contact..."
                         : "Instructions optionnelles pour le scraping. Ex: Extraire uniquement les titres et descriptions..."
                     }
                     value={prompt}
@@ -264,7 +264,11 @@ export default function Prompt() {
                     className="min-h-[120px] bg-secondary border-border focus:border-accent transition-colors resize-none"
                     disabled={isLoading}
                   />
-                  {!useAI && (
+                  {useAI ? (
+                    <p className="text-xs text-muted-foreground">
+                      L'IA extraira uniquement les informations pertinentes à votre recherche
+                    </p>
+                  ) : (
                     <p className="text-xs text-muted-foreground">
                       Laissez vide pour récupérer tout le contenu brut
                     </p>

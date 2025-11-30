@@ -115,11 +115,15 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that reformulates web content based on user instructions. Always respond in French. IMPORTANT: Always include the source URL for each piece of information you reference.",
+            content: "You are a precise content filter and reformulator. Your role is to ONLY extract and present information that is directly relevant to the user's specific request. Ignore all irrelevant content. Always respond in French and cite sources with their URLs (🔗).",
           },
           {
             role: "user",
-            content: `Voici le contenu scrappé de plusieurs sites web avec leurs URLs:\n\n${combinedContent}\n\nInstruction: ${prompt}\n\nIMPORTANT: Dans ta réponse, cite toujours la source avec son URL (🔗) pour chaque information que tu mentionnes.`,
+            content: `Voici le contenu scrappé de plusieurs sites web avec leurs URLs:\n\n${combinedContent}\n\nREQUÊTE SPÉCIFIQUE: ${prompt}\n\nIMPORTANT: 
+1. N'inclus QUE les informations directement pertinentes à ma requête
+2. Ignore tout le reste du contenu non pertinent
+3. Pour chaque information, cite la source avec son URL (🔗)
+4. Si aucune information pertinente n'est trouvée sur un site, ne le mentionne pas`,
           },
         ],
       }),
