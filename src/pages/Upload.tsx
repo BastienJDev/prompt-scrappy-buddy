@@ -73,6 +73,8 @@ export default function Upload() {
         });
       } else {
         setSites(parsedSites);
+        // Save to localStorage for use in Prompt page
+        localStorage.setItem("scraped-sites", JSON.stringify(parsedSites));
         toast({
           title: "Succès",
           description: `${parsedSites.length} sites importés avec succès`,
