@@ -9,6 +9,7 @@ const corsHeaders = {
 interface SiteEntry {
   category: string;
   siteName: string;
+  url: string;
 }
 
 serve(async (req) => {
@@ -30,10 +31,10 @@ serve(async (req) => {
     // Scrape each site
     for (const site of sites as SiteEntry[]) {
       try {
-        console.log(`Scraping: ${site.siteName}`);
+        console.log(`Scraping: ${site.siteName} - ${site.url}`);
         
-        // Add protocol if missing
-        let url = site.siteName;
+        // Use the URL from the database
+        let url = site.url;
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
           url = "https://" + url;
         }
@@ -64,7 +65,7 @@ serve(async (req) => {
         scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n\n${textContent}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
       } catch (error) {
         console.error(`Error scraping ${site.siteName}:`, error);
-        const url = site.siteName.startsWith("http") ? site.siteName : "https://" + site.siteName;
+        const url = site.url.startsWith("http") ? site.url : "https://" + site.url;
         scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n❌ Erreur lors du scraping\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
       }
     }

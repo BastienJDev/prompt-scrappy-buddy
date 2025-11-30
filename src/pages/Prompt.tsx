@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 interface SiteEntry {
   category: string;
   siteName: string;
+  url: string;
 }
 
 export default function Prompt() {
@@ -42,6 +43,7 @@ export default function Prompt() {
       const formattedSites = data.map((site: any) => ({
         category: site.category,
         siteName: site.site_name,
+        url: site.url,
       }));
 
       setSites(formattedSites);
