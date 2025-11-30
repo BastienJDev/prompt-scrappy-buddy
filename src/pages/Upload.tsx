@@ -11,6 +11,7 @@ interface SiteEntry {
   id?: string;
   category: string;
   siteName: string;
+  url: string;
 }
 
 export default function Upload() {
@@ -36,6 +37,7 @@ export default function Upload() {
         id: site.id,
         category: site.category,
         siteName: site.site_name,
+        url: site.url,
       }));
 
       setSites(formattedSites);
@@ -90,12 +92,13 @@ export default function Upload() {
       const parsedSites: SiteEntry[] = jsonData.map(row => ({
         category: row.category || row.Category || row.CATEGORY || "",
         siteName: row.siteName || row["Site Name"] || row.site_name || row.SITENAME || "",
-      })).filter(site => site.category && site.siteName);
+        url: row.url || row.URL || row.Url || "",
+      })).filter(site => site.category && site.siteName && site.url);
 
       if (parsedSites.length === 0) {
         toast({
           title: "Aucune donnée",
-          description: "Le fichier ne contient pas de colonnes 'category' et 'siteName'",
+          description: "Le fichier doit contenir les colonnes 'category', 'siteName' et 'url'",
           variant: "destructive",
         });
         return;
@@ -105,6 +108,7 @@ export default function Upload() {
       const sitesToInsert = parsedSites.map(site => ({
         category: site.category,
         site_name: site.siteName,
+        url: site.url,
       }));
 
       const { error } = await supabase
@@ -172,7 +176,7 @@ export default function Upload() {
               Importer vos sites
             </h1>
             <p className="text-muted-foreground text-lg">
-              Uploadez un fichier Excel avec les colonnes "category" et "siteName"
+              Uploadez un fichier Excel avec les colonnes "category", "siteName" et "url"
             </p>
           </div>
 
@@ -253,13 +257,17 @@ export default function Upload() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Nom du site
                       </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        URL
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
                     {sites.map((site, index) => (
                       <tr key={site.id || index} className="hover:bg-secondary/50 transition-colors">
                         <td className="px-6 py-4 text-sm text-foreground">{site.category}</td>
-                        <td className="px-6 py-4 text-sm text-primary">{site.siteName}</td>
+                        <td className="px-6 py-4 text-sm text-foreground">{site.siteName}</td>
+                        <td className="px-6 py-4 text-sm text-primary font-mono text-xs">{site.url}</td>
                       </tr>
                     ))}
                   </tbody>
