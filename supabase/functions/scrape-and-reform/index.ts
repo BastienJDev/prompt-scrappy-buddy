@@ -23,11 +23,7 @@ serve(async (req) => {
       throw new Error("Sites array is required");
     }
 
-    if (useAI && !prompt) {
-      throw new Error("Prompt is required when AI reformulation is enabled");
-    }
-
-    console.log(`Scraping ${sites.length} sites, AI reformulation: ${useAI}`);
+    console.log(`Scraping ${sites.length} sites, AI reformulation: ${useAI}, Custom prompt: ${!!prompt}`);
 
     const scrapedContent: string[] = [];
 
@@ -74,9 +70,22 @@ serve(async (req) => {
 
     const combinedContent = scrapedContent.join("");
 
-    // If AI is disabled, return raw content
+    // If AI is disabled, return raw content (or filtered by prompt if provided)
     if (!useAI) {
       console.log("Returning raw scraped content");
+      
+      // If there's a prompt without AI, use it as filtering instruction
+      if (prompt) {
+        return new Response(
+          JSON.stringify({ 
+            result: `Instructions de filtrage: "${prompt}"\n\n--- CONTENU BRUT ---\n\n${combinedContent}` 
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ result: combinedContent }),
         {
