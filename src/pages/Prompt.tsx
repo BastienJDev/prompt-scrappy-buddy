@@ -87,15 +87,6 @@ export default function Prompt() {
       return;
     }
 
-    if (useAI && !prompt.trim()) {
-      toast({
-        title: "Prompt manquant",
-        description: "Veuillez entrer un prompt de reformulation",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsLoading(true);
     setResult("");
 
@@ -106,7 +97,7 @@ export default function Prompt() {
       const { data, error } = await supabase.functions.invoke("scrape-and-reform", {
         body: { 
           sites: selectedSites,
-          prompt: useAI ? prompt : null,
+          prompt: prompt.trim() || null,
           useAI 
         },
       });
@@ -245,7 +236,7 @@ export default function Prompt() {
                         Reformulation IA
                       </Label>
                       <p className="text-xs text-muted-foreground">
-                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne uniquement le contenu brut"}
+                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne le contenu brut"}
                       </p>
                     </div>
                   </div>
@@ -256,20 +247,27 @@ export default function Prompt() {
                   />
                 </div>
 
-                {useAI && (
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-foreground block">
-                      Prompt de reformulation
-                    </label>
-                    <Textarea
-                      placeholder="Comment souhaitez-vous reformuler le contenu ? Ex: Résume ce texte en 3 points clés..."
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
-                      className="min-h-[120px] bg-secondary border-border focus:border-accent transition-colors resize-none"
-                      disabled={isLoading}
-                    />
-                  </div>
-                )}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground block">
+                    {useAI ? "Prompt de reformulation" : "Instructions de scraping"}
+                  </label>
+                  <Textarea
+                    placeholder={
+                      useAI
+                        ? "Comment souhaitez-vous reformuler le contenu ? Ex: Résume ce texte en 3 points clés..."
+                        : "Instructions optionnelles pour le scraping. Ex: Extraire uniquement les titres et descriptions..."
+                    }
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="min-h-[120px] bg-secondary border-border focus:border-accent transition-colors resize-none"
+                    disabled={isLoading}
+                  />
+                  {!useAI && (
+                    <p className="text-xs text-muted-foreground">
+                      Laissez vide pour récupérer tout le contenu brut
+                    </p>
+                  )}
+                </div>
 
                 <Button
                   type="submit"
