@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -191,6 +191,30 @@ export default function Upload() {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDeleteSite = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from("scraped_sites")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setSites(sites.filter(s => s.id !== id));
+      toast({
+        title: "Succès",
+        description: "Site supprimé",
+      });
+    } catch (error) {
+      console.error("Error deleting site:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le site",
+        variant: "destructive",
+      });
     }
   };
 
@@ -387,6 +411,7 @@ export default function Upload() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         URL
                       </th>
+                      <th className="px-2 py-3 w-10"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -395,6 +420,14 @@ export default function Upload() {
                         <td className="px-6 py-4 text-sm text-foreground">{site.category}</td>
                         <td className="px-6 py-4 text-sm text-foreground">{site.siteName}</td>
                         <td className="px-6 py-4 text-sm text-primary font-mono text-xs">{site.url}</td>
+                        <td className="px-2 py-4">
+                          <button
+                            onClick={() => site.id && handleDeleteSite(site.id)}
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
