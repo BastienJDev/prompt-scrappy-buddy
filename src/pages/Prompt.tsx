@@ -208,25 +208,6 @@ export default function Prompt() {
                   )}
                 </div>
 
-                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
-                  <div className="flex items-center space-x-3">
-                    <Sparkles className={`w-5 h-5 ${useAI ? "text-accent" : "text-muted-foreground"}`} />
-                    <div>
-                      <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
-                        Reformulation IA
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne le contenu brut"}
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="ai-toggle"
-                    checked={useAI}
-                    onCheckedChange={setUseAI}
-                  />
-                </div>
-
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-medium text-foreground">
@@ -269,6 +250,25 @@ export default function Prompt() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
+                  <div className="flex items-center space-x-3">
+                    <Sparkles className={`w-5 h-5 ${useAI ? "text-accent" : "text-muted-foreground"}`} />
+                    <div>
+                      <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
+                        Reformulation IA
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne le contenu brut"}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="ai-toggle"
+                    checked={useAI}
+                    onCheckedChange={setUseAI}
+                  />
                 </div>
 
                 <Button
