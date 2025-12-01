@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Download } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface SiteEntry {
   id?: string;
@@ -17,6 +26,8 @@ export default function Upload() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sites, setSites] = useState<SiteEntry[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newSite, setNewSite] = useState({ category: "", siteName: "", url: "" });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -134,43 +145,45 @@ export default function Upload() {
     }
   };
 
-  const handleExport = () => {
-    if (sites.length === 0) {
+  const handleAddSite = async () => {
+    if (!newSite.category || !newSite.siteName || !newSite.url) {
       toast({
-        title: "Aucune donnée",
-        description: "Il n'y a pas de sites à exporter",
+        title: "Champs requis",
+        description: "Veuillez remplir tous les champs",
         variant: "destructive",
       });
       return;
     }
 
+    setIsLoading(true);
     try {
-      // Préparer les données pour l'export
-      const exportData = sites.map(site => ({
-        category: site.category,
-        siteName: site.siteName,
-        url: site.url,
-      }));
+      const { error } = await supabase
+        .from("scraped_sites")
+        .insert({
+          category: newSite.category,
+          site_name: newSite.siteName,
+          url: newSite.url,
+        });
 
-      // Créer un workbook et une worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Sites");
+      if (error) throw error;
 
-      // Générer le fichier et le télécharger
-      XLSX.writeFile(workbook, `sites_${new Date().toISOString().split('T')[0]}.xlsx`);
-
+      await loadSites();
+      setNewSite({ category: "", siteName: "", url: "" });
+      setIsDialogOpen(false);
+      
       toast({
         title: "Succès",
-        description: `${sites.length} sites exportés`,
+        description: "Site ajouté avec succès",
       });
     } catch (error) {
-      console.error("Error exporting sites:", error);
+      console.error("Error adding site:", error);
       toast({
         title: "Erreur",
-        description: "Impossible d'exporter les sites",
+        description: "Impossible d'ajouter le site",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -275,16 +288,64 @@ export default function Upload() {
                   Sites enregistrés ({sites.length})
                 </h2>
                 <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleExport}
-                    disabled={isLoading}
-                    className="hover:shadow-[0_0_15px_rgba(0,200,255,0.3)]"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Exporter en XLS
-                  </Button>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="hover:shadow-[0_0_15px_rgba(0,200,255,0.3)]"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Ajouter un site
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Ajouter un site</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="category">Catégorie</Label>
+                          <Input
+                            id="category"
+                            value={newSite.category}
+                            onChange={(e) => setNewSite({ ...newSite, category: e.target.value })}
+                            placeholder="Ex: Actualités"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="siteName">Nom du site</Label>
+                          <Input
+                            id="siteName"
+                            value={newSite.siteName}
+                            onChange={(e) => setNewSite({ ...newSite, siteName: e.target.value })}
+                            placeholder="Ex: Le Monde"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="url">URL</Label>
+                          <Input
+                            id="url"
+                            value={newSite.url}
+                            onChange={(e) => setNewSite({ ...newSite, url: e.target.value })}
+                            placeholder="Ex: https://lemonde.fr"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleAddSite}
+                          disabled={isLoading}
+                          className="w-full bg-gradient-to-r from-primary to-accent"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <Plus className="w-4 h-4 mr-2" />
+                          )}
+                          Ajouter
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                   <Button
                     variant="destructive"
                     size="sm"
