@@ -16,26 +16,32 @@ export type Database = {
     Tables: {
       pdf_library: {
         Row: {
+          content: string | null
           file_name: string
           file_path: string
           file_size: number
           id: string
+          parsed_at: string | null
           uploaded_at: string
           user_id: string | null
         }
         Insert: {
+          content?: string | null
           file_name: string
           file_path: string
           file_size: number
           id?: string
+          parsed_at?: string | null
           uploaded_at?: string
           user_id?: string | null
         }
         Update: {
+          content?: string | null
           file_name?: string
           file_path?: string
           file_size?: number
           id?: string
+          parsed_at?: string | null
           uploaded_at?: string
           user_id?: string | null
         }
