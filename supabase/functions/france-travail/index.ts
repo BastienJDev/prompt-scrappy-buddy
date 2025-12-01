@@ -52,16 +52,11 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
 }
 
 async function searchOffers(accessToken: string, query: string = ''): Promise<FranceTravailOffer[]> {
-  // Codes INSEE pour Paris et petite couronne
-  const parisCodes = [
-    '75056', // Paris
-    '92001', '92002', '92004', '92007', '92009', '92012', '92014', '92019', '92020', // Hauts-de-Seine
-    '93001', '93005', '93006', '93007', '93008', '93010', '93013', '93014', // Seine-Saint-Denis
-    '94001', '94002', '94003', '94004', '94011', '94015', '94016', '94017', // Val-de-Marne
-  ];
+  // Départements de Paris et petite couronne
+  const departements = ['75', '92', '93', '94'];
   
   const params = new URLSearchParams({
-    commune: parisCodes.join(','),
+    departement: departements.join(','),
     range: '0-149',
   });
 
