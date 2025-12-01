@@ -301,7 +301,7 @@ export default function Prompt() {
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      {useAI ? "Scrapper et reformuler" : "Scrapper uniquement"}
+                      Rechercher
                     </>
                   )}
                 </Button>
