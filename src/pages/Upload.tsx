@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus } from "lucide-react";
@@ -14,6 +14,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface SiteEntry {
   id?: string;
@@ -306,12 +313,21 @@ export default function Upload() {
                       <div className="space-y-4 pt-4">
                         <div className="space-y-2">
                           <Label htmlFor="category">Catégorie</Label>
-                          <Input
-                            id="category"
+                          <Select
                             value={newSite.category}
-                            onChange={(e) => setNewSite({ ...newSite, category: e.target.value })}
-                            placeholder="Ex: Actualités"
-                          />
+                            onValueChange={(value) => setNewSite({ ...newSite, category: value })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner une catégorie" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {[...new Set(sites.map(s => s.category))].map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="siteName">Nom du site</Label>
