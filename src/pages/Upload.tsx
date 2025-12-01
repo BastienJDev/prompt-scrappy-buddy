@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -134,6 +134,46 @@ export default function Upload() {
     }
   };
 
+  const handleExport = () => {
+    if (sites.length === 0) {
+      toast({
+        title: "Aucune donnée",
+        description: "Il n'y a pas de sites à exporter",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Préparer les données pour l'export
+      const exportData = sites.map(site => ({
+        category: site.category,
+        siteName: site.siteName,
+        url: site.url,
+      }));
+
+      // Créer un workbook et une worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Sites");
+
+      // Générer le fichier et le télécharger
+      XLSX.writeFile(workbook, `sites_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+      toast({
+        title: "Succès",
+        description: `${sites.length} sites exportés`,
+      });
+    } catch (error) {
+      console.error("Error exporting sites:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'exporter les sites",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleClearAll = async () => {
     if (!confirm("Êtes-vous sûr de vouloir supprimer tous les sites ?")) {
       return;
@@ -234,16 +274,28 @@ export default function Upload() {
                 <h2 className="text-xl font-semibold text-foreground">
                   Sites enregistrés ({sites.length})
                 </h2>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleClearAll}
-                  disabled={isLoading}
-                  className="hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Tout supprimer
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExport}
+                    disabled={isLoading}
+                    className="hover:shadow-[0_0_15px_rgba(0,200,255,0.3)]"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Exporter en XLS
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleClearAll}
+                    disabled={isLoading}
+                    className="hover:shadow-[0_0_15px_rgba(239,68,68,0.4)]"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Tout supprimer
+                  </Button>
+                </div>
               </div>
               <div className="max-h-96 overflow-auto">
                 <table className="w-full">
