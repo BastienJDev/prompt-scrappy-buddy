@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, Trash2, Send, Loader2, BookOpen, Search, MessageSquare, FileSpreadsheet } from "lucide-react";
+import { FileText, Upload, Trash2, Send, Loader2, BookOpen, Search, MessageSquare, FileSpreadsheet, RefreshCw } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -328,6 +328,48 @@ ${pdf.content}
     );
   };
 
+  const [parsingPdfId, setParsingPdfId] = useState<string | null>(null);
+
+  const handleReParsePdf = async (pdf: PDF) => {
+    setParsingPdfId(pdf.id);
+    
+    toast({
+      title: "Analyse en cours",
+      description: `Extraction du texte de ${pdf.file_name}...`,
+    });
+
+    try {
+      const { data, error } = await supabase.functions.invoke("parse-pdf", {
+        body: { pdfId: pdf.id, filePath: pdf.file_path },
+      });
+
+      if (error) {
+        console.error("Parse error:", error);
+        toast({
+          title: "Erreur",
+          description: `Échec de l'extraction: ${error.message}`,
+          variant: "destructive",
+        });
+      } else {
+        console.log("PDF parsed:", data);
+        toast({
+          title: "Extraction terminée",
+          description: `${pdf.file_name} analysé avec succès`,
+        });
+        await loadPdfs();
+      }
+    } catch (error) {
+      console.error("Parse error:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'analyser le PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setParsingPdfId(null);
+    }
+  };
+
   const handleExportXLS = () => {
     if (!searchResults) {
       toast({
@@ -435,17 +477,36 @@ ${pdf.content}
                               </p>
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeletePdf(pdf);
-                            }}
-                            className="hover:text-destructive flex-shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReParsePdf(pdf);
+                              }}
+                              disabled={parsingPdfId === pdf.id}
+                              className="hover:text-primary"
+                              title="Re-analyser le PDF"
+                            >
+                              {parsingPdfId === pdf.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="w-4 h-4" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePdf(pdf);
+                              }}
+                              className="hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     ))
