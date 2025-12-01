@@ -46,21 +46,21 @@ All colors MUST be HSL.
     --shadow-glow-accent: 0 0 40px hsl(35 100% 55% / 0.3);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 200 80% 92%;
+    --sidebar-background: 195 100% 50%;
 
-    --sidebar-foreground: 220 27% 20%;
+    --sidebar-foreground: 0 0% 100%;
 
-    --sidebar-primary: 186 100% 45%;
+    --sidebar-primary: 0 0% 100%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 195 100% 50%;
 
-    --sidebar-accent: 200 70% 85%;
+    --sidebar-accent: 195 100% 60%;
 
-    --sidebar-accent-foreground: 220 27% 20%;
+    --sidebar-accent-foreground: 0 0% 100%;
 
-    --sidebar-border: 200 60% 80%;
+    --sidebar-border: 195 100% 40%;
 
-    --sidebar-ring: 186 100% 45%;
+    --sidebar-ring: 195 100% 70%;
   }
 
   .dark {
