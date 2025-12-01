@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -128,8 +127,7 @@ export default function Prompt() {
   if (loadingSites) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="pt-24 px-4 pb-12">
+        <main className="pt-8 px-4 pb-12">
           <div className="max-w-4xl mx-auto text-center">
             <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin" />
             <p className="mt-4 text-muted-foreground">Chargement des sites...</p>
@@ -142,8 +140,7 @@ export default function Prompt() {
   if (sites.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
-        <main className="pt-24 px-4 pb-12">
+        <main className="pt-8 px-4 pb-12">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <Card className="p-12 border-border">
               <Zap className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -168,8 +165,7 @@ export default function Prompt() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="pt-24 px-4 pb-12">
+      <main className="pt-8 px-4 pb-12">
         <div className="max-w-4xl mx-auto space-y-8 animate-slide-up">
           <div className="text-center space-y-4">
             <div className="relative inline-block">

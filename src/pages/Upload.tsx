@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { Navigation } from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2 } from "lucide-react";
@@ -168,8 +167,7 @@ export default function Upload() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
-      <main className="pt-24 px-4 pb-12">
+      <main className="pt-8 px-4 pb-12">
         <div className="max-w-4xl mx-auto space-y-8 animate-slide-up">
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
