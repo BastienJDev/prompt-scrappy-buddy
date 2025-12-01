@@ -55,6 +55,8 @@ export default function BibliotequePDF() {
 
       if (error) throw error;
       setPdfs(data || []);
+      // Sélectionner automatiquement tous les PDFs
+      setSelectedPdfs((data || []).map(pdf => pdf.id));
     } catch (error) {
       console.error("Erreur lors du chargement des PDFs:", error);
       toast({
