@@ -2,7 +2,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, Trash2, Send, Loader2, BookOpen, Search, MessageSquare } from "lucide-react";
+import { FileText, Upload, Trash2, Send, Loader2, BookOpen, Search, MessageSquare, FileSpreadsheet } from "lucide-react";
+import * as XLSX from "xlsx";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -325,6 +326,36 @@ ${pdf.content}
     );
   };
 
+  const handleExportXLS = () => {
+    if (!searchResults) {
+      toast({
+        title: "Attention",
+        description: "Aucun résultat à exporter",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const selectedPdfNames = pdfs
+      .filter(pdf => selectedPdfs.includes(pdf.id))
+      .map(pdf => pdf.file_name)
+      .join(", ");
+
+    const data = [
+      { Recherche: searchPrompt, Sources: selectedPdfNames, Résultats: searchResults }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Résultats");
+    XLSX.writeFile(wb, `recherche-pdf-${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+    toast({
+      title: "Export réussi",
+      description: "Le fichier XLS a été téléchargé",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-8 px-4 pb-12">
@@ -480,7 +511,18 @@ ${pdf.content}
                     {searchResults && (
                       <div className="flex-1 overflow-y-auto max-h-[400px]">
                         <div className="p-4 rounded-lg bg-secondary/50 border border-border">
-                          <h3 className="text-sm font-medium text-foreground mb-2">Résultats</h3>
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-sm font-medium text-foreground">Résultats</h3>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={handleExportXLS}
+                              className="flex items-center gap-2"
+                            >
+                              <FileSpreadsheet className="w-4 h-4" />
+                              Export XLS
+                            </Button>
+                          </div>
                           <div className="text-foreground/90 whitespace-pre-wrap text-sm">
                             {searchResults}
                           </div>
