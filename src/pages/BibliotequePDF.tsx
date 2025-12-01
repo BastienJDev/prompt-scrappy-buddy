@@ -13,6 +13,8 @@ interface PDF {
   file_path: string;
   file_size: number;
   uploaded_at: string;
+  content: string | null;
+  parsed_at: string | null;
 }
 
 interface Message {
@@ -77,21 +79,53 @@ export default function BibliotequePDF() {
 
         const filePath = `${Date.now()}-${file.name}`;
 
+        // Upload to storage
         const { error: uploadError } = await supabase.storage
           .from("pdfs")
           .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
-        const { error: dbError } = await supabase
+        // Insert metadata
+        const { data: insertedPdf, error: dbError } = await supabase
           .from("pdf_library")
           .insert({
             file_name: file.name,
             file_path: filePath,
             file_size: file.size,
-          });
+          })
+          .select()
+          .single();
 
         if (dbError) throw dbError;
+
+        // Parse PDF content in background
+        toast({
+          title: "Analyse en cours",
+          description: `Extraction du texte de ${file.name}...`,
+        });
+
+        supabase.functions
+          .invoke("parse-pdf", {
+            body: { pdfId: insertedPdf.id, filePath },
+          })
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("Parse error:", error);
+              toast({
+                title: "Avertissement",
+                description: `Le contenu de ${file.name} n'a pas pu être extrait complètement`,
+                variant: "destructive",
+              });
+            } else {
+              console.log("PDF parsed:", data);
+              toast({
+                title: "Extraction terminée",
+                description: `${file.name} : ${data.pages} pages analysées`,
+              });
+              loadPdfs(); // Refresh to show parsed status
+            }
+          });
       }
 
       await loadPdfs();
@@ -162,19 +196,32 @@ export default function BibliotequePDF() {
     setIsAiLoading(true);
 
     try {
-      // Pour l'instant, on envoie juste les noms des PDFs
-      // Dans une version complète, il faudrait parser le contenu des PDFs
-      const selectedPdfInfo = pdfs
-        .filter(pdf => selectedPdfs.includes(pdf.id))
-        .map(pdf => `- Fichier: "${pdf.file_name}" (${(pdf.file_size / 1024).toFixed(0)} Ko)`)
-        .join("\n");
+      // Récupérer le contenu textuel des PDFs sélectionnés
+      const { data: selectedPdfsData, error: fetchError } = await supabase
+        .from("pdf_library")
+        .select("*")
+        .in("id", selectedPdfs);
 
-      const pdfContent = `Documents disponibles pour analyse:
-${selectedPdfInfo}
+      if (fetchError) throw fetchError;
 
-IMPORTANT: Lorsque tu fournis une information, tu DOIS indiquer le fichier source exact en utilisant le format [Source: nom_du_fichier.pdf].
-
-Note technique: Le contenu textuel complet des PDFs n'a pas encore été extrait. Pour une analyse approfondie du contenu, le parsing PDF doit être implémenté.`;
+      // Construire le contenu avec le texte extrait
+      const pdfContent = selectedPdfsData
+        .map((pdf: any) => {
+          if (pdf.content) {
+            return `
+=== Document: ${pdf.file_name} ===
+${pdf.content}
+============================================
+`;
+          } else {
+            return `
+=== Document: ${pdf.file_name} ===
+[ATTENTION: Le contenu de ce document n'a pas encore été extrait. Le parsing est en cours.]
+============================================
+`;
+          }
+        })
+        .join("\n\n");
 
       const { data, error } = await supabase.functions.invoke("pdf-chat", {
         body: {
@@ -282,6 +329,8 @@ Note technique: Le contenu textuel complet des PDFs n'a pas encore été extrait
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {(pdf.file_size / 1024).toFixed(0)} Ko
+                                {pdf.parsed_at && " • Analysé"}
+                                {!pdf.content && pdf.parsed_at === null && " • En attente"}
                               </p>
                             </div>
                           </div>
