@@ -102,7 +102,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Calling Lovable AI for reformulation");
+    console.log("Calling Lovable AI for reformulation with prompt:", prompt);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -111,19 +111,40 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           {
             role: "system",
-            content: "You are a precise content filter and reformulator. Your role is to ONLY extract and present information that is directly relevant to the user's specific request. Ignore all irrelevant content. Always respond in French and cite sources with their URLs (🔗).",
+            content: `Tu es un assistant expert en extraction d'informations. Ta SEULE mission est d'extraire et présenter UNIQUEMENT les informations qui correspondent EXACTEMENT à la requête de l'utilisateur.
+
+RÈGLES STRICTES:
+- NE JAMAIS inventer ou déduire des informations
+- NE JAMAIS inclure de contenu générique ou hors-sujet
+- Si une information n'est pas explicitement présente dans le contenu, ne l'inclus pas
+- Cite TOUJOURS la source exacte avec l'URL (🔗) pour chaque information
+- Réponds TOUJOURS en français
+- Si aucune information pertinente n'est trouvée, dis-le clairement
+
+FORMAT DE RÉPONSE:
+Pour chaque information pertinente trouvée:
+📌 [Information extraite]
+🔗 URL: [url exacte de la source]
+
+---`,
           },
           {
             role: "user",
-            content: `Voici le contenu scrappé de plusieurs sites web avec leurs URLs:\n\n${combinedContent}\n\nREQUÊTE SPÉCIFIQUE: ${prompt}\n\nIMPORTANT: 
-1. N'inclus QUE les informations directement pertinentes à ma requête
-2. Ignore tout le reste du contenu non pertinent
-3. Pour chaque information, cite la source avec son URL (🔗)
-4. Si aucune information pertinente n'est trouvée sur un site, ne le mentionne pas`,
+            content: `REQUÊTE DE RECHERCHE: "${prompt}"
+
+CONTENU DES SITES À ANALYSER:
+${combinedContent}
+
+INSTRUCTIONS:
+1. Analyse chaque site et extrait UNIQUEMENT les passages qui répondent directement à ma requête "${prompt}"
+2. Pour chaque information pertinente, cite l'URL source
+3. Si un site ne contient aucune information pertinente, ignore-le complètement
+4. Présente les résultats de manière claire et structurée
+5. NE PAS résumer le contenu général des sites, SEULEMENT les informations pertinentes à ma requête`,
           },
         ],
       }),
