@@ -1,46 +1,61 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, TrendingUp, Sparkles } from "lucide-react";
+import { Calendar, TrendingUp, Sparkles, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ActualitesGenerales() {
-  const actualites = [
-    {
-      id: 1,
-      titre: "Nouvelle fonctionnalité IA",
-      date: "2025-01-15",
-      categorie: "Mise à jour",
-      description: "La reformulation IA est maintenant disponible avec des résultats encore plus précis et pertinents.",
-      badge: "Nouveau",
-      badgeColor: "bg-primary text-white"
-    },
-    {
-      id: 2,
-      titre: "Amélioration du scraping",
-      date: "2025-01-10",
-      categorie: "Performance",
-      description: "Le système de scraping a été optimisé pour des temps de réponse jusqu'à 40% plus rapides.",
-      badge: "Performance",
-      badgeColor: "bg-accent text-white"
-    },
-    {
-      id: 3,
-      titre: "Nouvelles catégories disponibles",
-      date: "2025-01-05",
-      categorie: "Contenu",
-      description: "Plusieurs nouvelles catégories de sites ont été ajoutées pour élargir vos possibilités de recherche.",
-      badge: "Contenu",
-      badgeColor: "bg-[hsl(235,45%,15%)] text-white"
-    },
-    {
-      id: 4,
-      titre: "Interface utilisateur améliorée",
-      date: "2024-12-28",
-      categorie: "Design",
-      description: "Une nouvelle interface plus moderne et intuitive pour une meilleure expérience utilisateur.",
-      badge: "Design",
-      badgeColor: "bg-secondary text-foreground"
-    }
-  ];
+  const [actualites, setActualites] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchActualites = async () => {
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase.functions.invoke('scrape-and-reform', {
+          body: {
+            sites: [
+              {
+                category: "Actualités générales",
+                siteName: "Les Échos",
+                url: "https://www.lesechos.fr/"
+              }
+            ],
+            prompt: "Extraire les dernières actualités économiques et générales",
+            useAI: true
+          }
+        });
+
+        if (error) {
+          console.error("Erreur lors du scraping:", error);
+          toast({
+            title: "Erreur",
+            description: "Impossible de récupérer les actualités des Échos",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        if (data?.result) {
+          setActualites(data.result);
+        }
+      } catch (err) {
+        console.error("Erreur:", err);
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue lors du chargement des actualités",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchActualites();
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -58,51 +73,36 @@ export default function ActualitesGenerales() {
             </p>
           </div>
 
-          <div className="grid gap-6">
-            {actualites.map((actu, index) => (
-              <Card 
-                key={actu.id}
-                className="border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="p-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2 flex-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h2 className="text-2xl font-bold text-foreground">
-                          {actu.titre}
-                        </h2>
-                        <Badge className={actu.badgeColor}>
-                          {actu.badge}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          <span>{new Date(actu.date).toLocaleDateString('fr-FR', { 
-                            day: 'numeric', 
-                            month: 'long', 
-                            year: 'numeric' 
-                          })}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          <span>{actu.categorie}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <Sparkles className="w-6 h-6 text-primary flex-shrink-0" />
-                  </div>
-                  
-                  <p className="text-foreground/80 leading-relaxed">
-                    {actu.description}
-                  </p>
+          {isLoading ? (
+            <Card className="border-border p-12 text-center">
+              <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
+              <p className="text-muted-foreground text-lg">
+                Chargement des actualités des Échos...
+              </p>
+            </Card>
+          ) : actualites ? (
+            <Card className="border-border overflow-hidden">
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                  <h2 className="text-2xl font-bold text-foreground">
+                    Les Échos - Actualités du jour
+                  </h2>
+                  <Badge className="bg-primary text-white">En direct</Badge>
                 </div>
-                
-                <div className="h-1 bg-gradient-to-r from-primary/50 via-accent/50 to-transparent" />
-              </Card>
-            ))}
-          </div>
+                <div className="prose prose-sm max-w-none text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                  {actualites}
+                </div>
+              </div>
+              <div className="h-1 bg-gradient-to-r from-primary/50 via-accent/50 to-transparent" />
+            </Card>
+          ) : (
+            <Card className="border-border p-12 text-center">
+              <p className="text-muted-foreground text-lg">
+                Aucune actualité disponible pour le moment
+              </p>
+            </Card>
+          )}
 
           <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-8 text-center">
             <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
