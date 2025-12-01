@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trophy, Loader2, Search, ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trophy, Loader2, Search, ExternalLink, MapPin, Briefcase, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +10,15 @@ import { supabase } from "@/integrations/supabase/client";
 interface SiteEntry {
   category: string;
   siteName: string;
+  url: string;
+}
+
+interface JobOffer {
+  title: string;
+  location: string;
+  contract: string;
+  salary: string;
+  description: string;
   url: string;
 }
 
@@ -108,37 +118,77 @@ Sépare chaque offre par une ligne vide. Inclus UNIQUEMENT les offres d'emploi a
     }
   };
 
-  // Extraire les URLs du résultat
-  const extractUrls = (text: string): Array<{ text: string; url: string }> => {
-    const urlPattern = /🔗\s*URL:\s*(https?:\/\/[^\s\n]+)/gi;
-    const sections: Array<{ text: string; url: string }> = [];
-    const lines = text.split('\n');
+  // Parser les offres du résultat
+  const parseOffers = (text: string): JobOffer[] => {
+    const offers: JobOffer[] = [];
+    const sections = text.split(/\n\n+/);
     
-    let currentSection = '';
-    
-    for (const line of lines) {
-      const urlMatch = line.match(urlPattern);
-      if (urlMatch) {
-        if (currentSection.trim()) {
-          sections.push({
-            text: currentSection.trim(),
-            url: urlMatch[1] || line.match(/https?:\/\/[^\s\n]+/)?.[0] || '#'
-          });
-          currentSection = '';
+    for (const section of sections) {
+      if (!section.trim()) continue;
+      
+      const lines = section.split('\n');
+      let title = '';
+      let location = '';
+      let contract = '';
+      let salary = '';
+      let description = '';
+      let url = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Titre (ligne qui commence par ** ou est la première ligne importante)
+        if (line.startsWith('**') && line.endsWith('**')) {
+          title = line.replace(/\*\*/g, '');
+        } else if (!title && line && !line.includes('URL:') && !line.includes('📍')) {
+          title = line;
         }
-      } else {
-        currentSection += line + '\n';
+        
+        // Métadonnées (localisation, contrat, salaire)
+        if (line.includes('📍') || line.includes('|')) {
+          const parts = line.split('|').map(p => p.trim());
+          for (const part of parts) {
+            if (part.includes('📍')) {
+              location = part.replace('📍', '').trim();
+            } else if (part.includes('📅')) {
+              contract = part.replace('📅', '').trim();
+            } else if (part.includes('💰')) {
+              salary = part.replace('💰', '').trim();
+            }
+          }
+        }
+        
+        // URL
+        if (line.includes('🔗') || line.toLowerCase().includes('url:')) {
+          const urlMatch = line.match(/https?:\/\/[^\s]+/);
+          if (urlMatch) {
+            url = urlMatch[0];
+          }
+        }
+        
+        // Description (lignes normales sans métadonnées)
+        if (!line.includes('URL:') && !line.includes('🔗') && !line.includes('📍') && 
+            !line.includes('**') && line.length > 20 && !title.includes(line)) {
+          description += line + ' ';
+        }
+      }
+      
+      if (title && url) {
+        offers.push({
+          title: title.trim(),
+          location: location || 'Non spécifié',
+          contract: contract || 'Non spécifié',
+          salary: salary || 'Non spécifié',
+          description: description.trim() || 'Aucune description disponible',
+          url: url.trim()
+        });
       }
     }
     
-    if (currentSection.trim()) {
-      sections.push({ text: currentSection.trim(), url: '#' });
-    }
-    
-    return sections;
+    return offers;
   };
 
-  const sections = extractUrls(result);
+  const offers = parseOffers(result);
 
   return (
     <div className="min-h-screen bg-background">
@@ -197,39 +247,69 @@ Sépare chaque offre par une ligne vide. Inclus UNIQUEMENT les offres d'emploi a
             <Card className="border-border p-12 text-center">
               <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground text-lg">
-                Cliquez sur rechercher pour trouver des offres d'emploi sportives
+                Cliquez sur rechercher pour trouver des offres d&apos;emploi sportives
+              </p>
+            </Card>
+          ) : offers.length === 0 ? (
+            <Card className="border-border p-12 text-center">
+              <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground text-lg">
+                Aucune offre trouvée. Essayez une autre recherche.
               </p>
             </Card>
           ) : (
-            <div className="space-y-6">
-              {sections.map((section, index) => (
+            <div className="grid gap-6">
+              {offers.map((offer, index) => (
                 <Card 
                   key={index}
                   className="border-border overflow-hidden hover:border-accent/50 transition-all duration-300 hover:shadow-lg"
                 >
                   <div className="p-6 space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="space-y-3 flex-1">
-                        <Trophy className="w-6 h-6 text-accent" />
-                        <div className="prose prose-sm max-w-none">
-                          <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                            {section.text}
-                          </p>
-                        </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <h2 className="text-2xl font-bold text-foreground flex-1">
+                          {offer.title}
+                        </h2>
+                        <Trophy className="w-6 h-6 text-accent flex-shrink-0" />
                       </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        {offer.location !== 'Non spécifié' && (
+                          <Badge variant="secondary" className="bg-secondary/50">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            {offer.location}
+                          </Badge>
+                        )}
+                        {offer.contract !== 'Non spécifié' && (
+                          <Badge variant="secondary" className="bg-accent/20 text-accent">
+                            <Briefcase className="w-3 h-3 mr-1" />
+                            {offer.contract}
+                          </Badge>
+                        )}
+                        {offer.salary !== 'Non spécifié' && (
+                          <Badge variant="secondary" className="bg-primary/20 text-primary">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            {offer.salary}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {offer.description && (
+                        <p className="text-foreground/80 leading-relaxed">
+                          {offer.description}
+                        </p>
+                      )}
                     </div>
 
-                    {section.url !== '#' && (
-                      <div className="pt-2 border-t border-border">
-                        <Button
-                          onClick={() => window.open(section.url, '_blank')}
-                          className="bg-accent hover:bg-accent/90 text-white"
-                        >
-                          <ExternalLink className="w-4 h-4 mr-2" />
-                          Voir l'offre
-                        </Button>
-                      </div>
-                    )}
+                    <div className="pt-2 border-t border-border">
+                      <Button
+                        onClick={() => window.open(offer.url, '_blank')}
+                        className="bg-accent hover:bg-accent/90 text-white"
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Voir l&apos;offre
+                      </Button>
+                    </div>
                   </div>
                   
                   <div className="h-1 bg-gradient-to-r from-accent/50 via-primary/50 to-transparent" />
