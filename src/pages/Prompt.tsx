@@ -172,12 +172,9 @@ export default function Prompt() {
             <div className="relative inline-block">
               <div className="absolute inset-0 bg-accent/20 rounded-full blur-3xl animate-glow-pulse" />
               <h1 className="relative text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent via-accent-glow to-primary bg-clip-text text-transparent">
-                Scrapper & Reformuler
+                Bienvenue Enzo
               </h1>
             </div>
-            <p className="text-muted-foreground text-lg">
-              Sélectionnez les catégories à scrapper
-            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
