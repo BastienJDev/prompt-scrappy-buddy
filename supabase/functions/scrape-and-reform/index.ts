@@ -12,6 +12,73 @@ interface SiteEntry {
   url: string;
 }
 
+interface RelevantMatch {
+  siteName: string;
+  category: string;
+  url: string;
+  matchingKeywords: string[];
+  relevantParagraphs: string[];
+}
+
+// Extract keywords from prompt (remove common French words)
+function extractKeywords(prompt: string): string[] {
+  const stopWords = new Set([
+    'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'dans', 'sur', 'pour', 'par',
+    'avec', 'sans', 'sous', 'entre', 'vers', 'chez', 'et', 'ou', 'mais', 'donc',
+    'car', 'ni', 'que', 'qui', 'quoi', 'dont', 'où', 'ce', 'cette', 'ces', 'son',
+    'sa', 'ses', 'leur', 'leurs', 'mon', 'ma', 'mes', 'ton', 'ta', 'tes', 'notre',
+    'nos', 'votre', 'vos', 'au', 'aux', 'en', 'est', 'sont', 'être', 'avoir', 'fait',
+    'faire', 'peut', 'peuvent', 'doit', 'doivent', 'tout', 'tous', 'toute', 'toutes',
+    'plus', 'moins', 'très', 'bien', 'mal', 'peu', 'beaucoup', 'trop', 'aussi',
+    'comme', 'comment', 'quand', 'pourquoi', 'si', 'alors', 'ainsi', 'donc'
+  ]);
+  
+  return prompt
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Remove accents for matching
+    .split(/\s+/)
+    .filter(word => word.length > 2 && !stopWords.has(word))
+    .map(word => word.replace(/[^a-z0-9]/g, ''));
+}
+
+// Check if text contains any keyword and return matching paragraphs
+function findRelevantContent(text: string, keywords: string[]): { matches: string[], matchedKeywords: string[] } {
+  const normalizedText = text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  
+  const matchedKeywords: string[] = [];
+  const relevantParagraphs: Set<string> = new Set();
+  
+  // Split into paragraphs/sentences
+  const paragraphs = text.split(/[.\n]+/).filter(p => p.trim().length > 30);
+  
+  for (const keyword of keywords) {
+    if (normalizedText.includes(keyword)) {
+      matchedKeywords.push(keyword);
+      
+      // Find paragraphs containing this keyword
+      for (const para of paragraphs) {
+        const normalizedPara = para
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+        
+        if (normalizedPara.includes(keyword)) {
+          relevantParagraphs.add(para.trim());
+        }
+      }
+    }
+  }
+  
+  return {
+    matches: Array.from(relevantParagraphs).slice(0, 10), // Limit to 10 most relevant paragraphs
+    matchedKeywords
+  };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -26,7 +93,12 @@ serve(async (req) => {
 
     console.log(`Scraping ${sites.length} sites, AI reformulation: ${useAI}, Custom prompt: ${!!prompt}`);
 
+    // Extract keywords from prompt for pre-filtering
+    const keywords = prompt ? extractKeywords(prompt) : [];
+    console.log(`Extracted keywords: ${keywords.join(', ')}`);
+
     const scrapedContent: string[] = [];
+    const relevantMatches: RelevantMatch[] = [];
 
     // Scrape each site
     for (const site of sites as SiteEntry[]) {
@@ -47,7 +119,6 @@ serve(async (req) => {
 
         if (!websiteResponse.ok) {
           console.error(`Failed to fetch ${url}: ${websiteResponse.statusText}`);
-          scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n❌ Erreur: ${websiteResponse.statusText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
           continue;
         }
 
@@ -59,40 +130,83 @@ serve(async (req) => {
           .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
-          .trim()
-          .slice(0, 5000); // Limit per site
+          .trim();
 
-        scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n\n${textContent}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
+        // If we have keywords, pre-filter content
+        if (keywords.length > 0 && useAI) {
+          const { matches, matchedKeywords } = findRelevantContent(textContent, keywords);
+          
+          if (matches.length > 0) {
+            console.log(`✓ Found ${matches.length} relevant paragraphs in ${site.siteName} (keywords: ${matchedKeywords.join(', ')})`);
+            
+            relevantMatches.push({
+              siteName: site.siteName,
+              category: site.category,
+              url: url,
+              matchingKeywords: matchedKeywords,
+              relevantParagraphs: matches
+            });
+          } else {
+            console.log(`✗ No relevant content in ${site.siteName}`);
+          }
+        } else {
+          // No keywords or AI disabled - keep all content (limited)
+          scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n\n${textContent.slice(0, 5000)}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
+        }
       } catch (error) {
         console.error(`Error scraping ${site.siteName}:`, error);
-        const url = site.url.startsWith("http") ? site.url : "https://" + site.url;
-        scrapedContent.push(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n[${site.category}] ${site.siteName}\n🔗 URL: ${url}\n❌ Erreur lors du scraping\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`);
       }
     }
 
-    const combinedContent = scrapedContent.join("");
+    // Build content for AI based on relevant matches
+    let contentForAI = "";
+    
+    if (relevantMatches.length > 0) {
+      console.log(`Found relevant content in ${relevantMatches.length} sites`);
+      
+      for (const match of relevantMatches) {
+        contentForAI += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+        contentForAI += `📍 SOURCE: ${match.siteName}\n`;
+        contentForAI += `📁 Catégorie: ${match.category}\n`;
+        contentForAI += `🔗 URL EXACTE: ${match.url}\n`;
+        contentForAI += `🔑 Mots-clés trouvés: ${match.matchingKeywords.join(', ')}\n`;
+        contentForAI += `\n📄 EXTRAITS PERTINENTS:\n`;
+        match.relevantParagraphs.forEach((para, i) => {
+          contentForAI += `\n[Extrait ${i + 1}]\n${para}\n`;
+        });
+        contentForAI += `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      }
+    } else if (scrapedContent.length > 0) {
+      contentForAI = scrapedContent.join("");
+    }
 
-    // If AI is disabled, return raw content (or filtered by prompt if provided)
+    // If AI is disabled, return raw content
     if (!useAI) {
       console.log("Returning raw scraped content");
       
-      // If there's a prompt without AI, use it as filtering instruction
-      if (prompt) {
+      if (prompt && relevantMatches.length > 0) {
         return new Response(
           JSON.stringify({ 
-            result: `Instructions de filtrage: "${prompt}"\n\n--- CONTENU BRUT ---\n\n${combinedContent}` 
+            result: `Recherche: "${prompt}"\nMots-clés: ${keywords.join(', ')}\n\n${contentForAI}` 
           }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          }
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       
       return new Response(
-        JSON.stringify({ result: combinedContent }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
+        JSON.stringify({ result: scrapedContent.join("") }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if we found any relevant content
+    if (!contentForAI || contentForAI.trim().length === 0) {
+      console.log("No relevant content found for the query");
+      return new Response(
+        JSON.stringify({ 
+          result: `❌ Aucune information pertinente trouvée pour la recherche "${prompt}".\n\nMots-clés recherchés: ${keywords.join(', ')}\n\nEssayez avec d'autres termes ou vérifiez que les sites contiennent bien ce type d'information.` 
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -102,7 +216,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY not configured");
     }
 
-    console.log("Calling Lovable AI for reformulation with prompt:", prompt);
+    console.log(`Calling Lovable AI with ${relevantMatches.length} pre-filtered sources`);
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -115,36 +229,38 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `Tu es un assistant expert en extraction d'informations. Ta SEULE mission est d'extraire et présenter UNIQUEMENT les informations qui correspondent EXACTEMENT à la requête de l'utilisateur.
+            content: `Tu es un assistant expert en synthèse d'informations juridiques et sportives.
+
+CONTEXTE: L'utilisateur recherche des informations spécifiques. Le contenu ci-dessous a été PRÉ-FILTRÉ pour ne contenir QUE les passages pertinents avec leurs URLs exactes.
 
 RÈGLES STRICTES:
-- NE JAMAIS inventer ou déduire des informations
-- NE JAMAIS inclure de contenu générique ou hors-sujet
-- Si une information n'est pas explicitement présente dans le contenu, ne l'inclus pas
-- Cite TOUJOURS la source exacte avec l'URL (🔗) pour chaque information
-- Réponds TOUJOURS en français
-- Si aucune information pertinente n'est trouvée, dis-le clairement
+1. Utilise UNIQUEMENT les informations fournies dans les extraits
+2. Pour CHAQUE information, cite OBLIGATOIREMENT l'URL exacte de la source
+3. NE JAMAIS inventer ou déduire des informations non présentes
+4. Réponds TOUJOURS en français
+5. Structure ta réponse de manière claire
 
 FORMAT DE RÉPONSE:
-Pour chaque information pertinente trouvée:
-📌 [Information extraite]
-🔗 URL: [url exacte de la source]
+Pour chaque information trouvée:
+
+📌 **[Titre/Sujet]**
+[Information extraite]
+🔗 Source: [URL exacte]
 
 ---`,
           },
           {
             role: "user",
-            content: `REQUÊTE DE RECHERCHE: "${prompt}"
+            content: `REQUÊTE: "${prompt}"
 
-CONTENU DES SITES À ANALYSER:
-${combinedContent}
+SOURCES PRÉ-FILTRÉES (contenant les mots-clés: ${keywords.join(', ')}):
+${contentForAI}
 
 INSTRUCTIONS:
-1. Analyse chaque site et extrait UNIQUEMENT les passages qui répondent directement à ma requête "${prompt}"
-2. Pour chaque information pertinente, cite l'URL source
-3. Si un site ne contient aucune information pertinente, ignore-le complètement
-4. Présente les résultats de manière claire et structurée
-5. NE PAS résumer le contenu général des sites, SEULEMENT les informations pertinentes à ma requête`,
+1. Synthétise les informations pertinentes à ma requête "${prompt}"
+2. Cite l'URL EXACTE pour chaque information (utilise les URLs fournies dans "🔗 URL EXACTE:")
+3. Si plusieurs sources traitent du même sujet, regroupe-les
+4. Présente les résultats de manière structurée et professionnelle`,
           },
         ],
       }),
@@ -163,9 +279,7 @@ INSTRUCTIONS:
 
     return new Response(
       JSON.stringify({ result }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error in scrape-and-reform:", error);
