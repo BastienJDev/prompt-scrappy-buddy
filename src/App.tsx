@@ -9,7 +9,8 @@ import Index from "./pages/Index";
 import Prompt from "./pages/Prompt";
 import ActualitesGenerales from "./pages/ActualitesGenerales";
 import ActualitesSportives from "./pages/ActualitesSportives";
-import OffresEmploi from "./pages/OffresEmploi";
+import OffresGenerales from "./pages/OffresGenerales";
+import OffresSportives from "./pages/OffresSportives";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,7 +34,8 @@ const App = () => (
                   <Route path="/prompt" element={<Prompt />} />
                   <Route path="/actualites/generales" element={<ActualitesGenerales />} />
                   <Route path="/actualites/sportives" element={<ActualitesSportives />} />
-                  <Route path="/offres-emploi" element={<OffresEmploi />} />
+                  <Route path="/offres/generales" element={<OffresGenerales />} />
+                  <Route path="/offres/sportives" element={<OffresSportives />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

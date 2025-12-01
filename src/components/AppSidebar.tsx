@@ -29,6 +29,11 @@ const actualitesItems = [
   { title: "Actualités sportives", url: "/actualites/sportives", icon: Trophy },
 ];
 
+const offresItems = [
+  { title: "Offres générales", url: "/offres/generales", icon: Briefcase },
+  { title: "Offres sportives", url: "/offres/sportives", icon: Trophy },
+];
+
 export function AppSidebar() {
   const { open } = useSidebar();
 
@@ -98,18 +103,35 @@ export function AppSidebar() {
                 </SidebarMenuItem>
               </Collapsible>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink
-                    to="/offres-emploi"
-                    className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3"
-                    activeClassName="bg-white/20 text-white font-semibold shadow-lg"
-                  >
-                    <Briefcase className="w-6 h-6" />
-                    {open && <span className="text-base">Offres d'emploi</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Collapsible asChild defaultOpen className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3">
+                      <Briefcase className="w-6 h-6" />
+                      {open && <span className="text-base">Offres d'emploi</span>}
+                      {open && <ChevronDown className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />}
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {offresItems.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink
+                              to={subItem.url}
+                              className="hover:bg-white/10 text-white/80 hover:text-white transition-all rounded-lg"
+                              activeClassName="bg-white/20 text-white font-semibold"
+                            >
+                              <subItem.icon className="w-4 h-4" />
+                              {open && <span>{subItem.title}</span>}
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
