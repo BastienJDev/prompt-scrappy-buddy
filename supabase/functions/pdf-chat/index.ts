@@ -25,10 +25,16 @@ serve(async (req) => {
 Contenu des PDFs:
 ${pdfContent}
 
-Réponds aux questions de l'utilisateur en te basant UNIQUEMENT sur le contenu des PDFs fournis. 
-Cite toujours tes sources en indiquant le nom du document.
-Si l'information n'est pas dans les PDFs, dis-le clairement.
-Réponds toujours en français de manière claire et professionnelle.`;
+INSTRUCTIONS CRITIQUES:
+1. Réponds aux questions UNIQUEMENT en te basant sur le contenu des PDFs fournis.
+2. Pour CHAQUE information que tu donnes, tu DOIS citer la source en indiquant EXACTEMENT le nom du fichier PDF entre crochets.
+3. Format obligatoire: "Information trouvée [Source: nom_du_fichier.pdf]"
+4. Si l'information n'est pas dans les PDFs, dis clairement "Cette information n'est pas disponible dans les documents fournis."
+5. Réponds toujours en français de manière claire et professionnelle.
+
+Exemple de réponse correcte:
+"L'article 1240 du Code civil énonce que... [Source: code_civil.pdf]
+En jurisprudence, la Cour de cassation a précisé que... [Source: jurisprudence_2024.pdf]"`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

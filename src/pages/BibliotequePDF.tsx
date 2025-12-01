@@ -164,12 +164,17 @@ export default function BibliotequePDF() {
     try {
       // Pour l'instant, on envoie juste les noms des PDFs
       // Dans une version complète, il faudrait parser le contenu des PDFs
-      const selectedPdfNames = pdfs
+      const selectedPdfInfo = pdfs
         .filter(pdf => selectedPdfs.includes(pdf.id))
-        .map(pdf => pdf.file_name)
-        .join(", ");
+        .map(pdf => `- Fichier: "${pdf.file_name}" (${(pdf.file_size / 1024).toFixed(0)} Ko)`)
+        .join("\n");
 
-      const pdfContent = `Documents sélectionnés: ${selectedPdfNames}\n\nNote: Le parsing complet du contenu PDF nécessiterait une implémentation supplémentaire.`;
+      const pdfContent = `Documents disponibles pour analyse:
+${selectedPdfInfo}
+
+IMPORTANT: Lorsque tu fournis une information, tu DOIS indiquer le fichier source exact en utilisant le format [Source: nom_du_fichier.pdf].
+
+Note technique: Le contenu textuel complet des PDFs n'a pas encore été extrait. Pour une analyse approfondie du contenu, le parsing PDF doit être implémenté.`;
 
       const { data, error } = await supabase.functions.invoke("pdf-chat", {
         body: {
