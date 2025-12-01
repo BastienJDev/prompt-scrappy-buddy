@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Send, Loader2, Zap, ChevronDown } from "lucide-react";
+import { Sparkles, Send, Loader2, Zap, ChevronDown, FileDown, FileText, Table } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
+import jsPDF from "jspdf";
+import { Document, Paragraph, TextRun, Packer } from "docx";
 
 interface SiteEntry {
   category: string;
@@ -77,6 +79,109 @@ export default function Prompt() {
     } else {
       setSelectedCategories([...categories]);
     }
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 15;
+    const maxWidth = pageWidth - 2 * margin;
+    
+    // Titre
+    doc.setFontSize(16);
+    doc.text("Résultat de recherche", margin, 20);
+    
+    // Date
+    doc.setFontSize(10);
+    doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, margin, 30);
+    
+    // Contenu
+    doc.setFontSize(11);
+    const lines = doc.splitTextToSize(result, maxWidth);
+    
+    let y = 40;
+    for (let i = 0; i < lines.length; i++) {
+      if (y > pageHeight - margin) {
+        doc.addPage();
+        y = margin;
+      }
+      doc.text(lines[i], margin, y);
+      y += 7;
+    }
+    
+    doc.save(`recherche_${new Date().toISOString().split('T')[0]}.pdf`);
+    toast({
+      title: "Export réussi",
+      description: "Le PDF a été téléchargé",
+    });
+  };
+
+  const exportToCSV = () => {
+    const lines = result.split('\n').filter(line => line.trim());
+    const csvContent = lines.map(line => `"${line.replace(/"/g, '""')}"`).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `recherche_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: "Export réussi",
+      description: "Le CSV a été téléchargé",
+    });
+  };
+
+  const exportToDOCX = async () => {
+    const paragraphs = result.split('\n').map(line => 
+      new Paragraph({
+        children: [new TextRun(line || " ")],
+      })
+    );
+
+    const doc = new Document({
+      sections: [{
+        properties: {},
+        children: [
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: "Résultat de recherche",
+                bold: true,
+                size: 32,
+              }),
+            ],
+          }),
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `Date: ${new Date().toLocaleDateString('fr-FR')}`,
+                size: 20,
+              }),
+            ],
+          }),
+          new Paragraph({ text: "" }),
+          ...paragraphs,
+        ],
+      }],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `recherche_${new Date().toISOString().split('T')[0]}.docx`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast({
+      title: "Export réussi",
+      description: "Le document DOCX a été téléchargé",
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -334,9 +439,43 @@ export default function Prompt() {
             {result && (
               <Card className="border-primary/30 bg-card/50 backdrop-blur-sm overflow-hidden">
                 <div className="p-6 border-b border-border bg-gradient-to-r from-accent/10 to-primary/10">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-5 h-5 text-accent" />
-                    <h2 className="text-xl font-semibold text-foreground">Résultat</h2>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <Sparkles className="w-5 h-5 text-accent" />
+                      <h2 className="text-xl font-semibold text-foreground">Résultat</h2>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={exportToPDF}
+                        className="gap-2"
+                      >
+                        <FileDown className="w-4 h-4" />
+                        PDF
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={exportToCSV}
+                        className="gap-2"
+                      >
+                        <Table className="w-4 h-4" />
+                        CSV
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={exportToDOCX}
+                        className="gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        DOCX
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="p-6 max-h-[600px] overflow-auto">
