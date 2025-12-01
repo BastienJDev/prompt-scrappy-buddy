@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Send, Loader2, Zap } from "lucide-react";
+import { Sparkles, Send, Loader2, Zap, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface SiteEntry {
   category: string;
@@ -209,47 +210,65 @@ export default function Prompt() {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <label className="text-sm font-medium text-foreground">
-                      Catégories ({selectedCategories.length} sélectionnée{selectedCategories.length > 1 ? 's' : ''})
-                    </label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSelectAll}
-                      className="text-xs"
-                    >
-                      {selectedCategories.length === categories.length ? "Tout désélectionner" : "Tout sélectionner"}
-                    </Button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {categories.map((category) => (
-                      <div
-                        key={category}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border transition-all ${
-                          selectedCategories.includes(category)
-                            ? "border-primary bg-primary/10"
-                            : "border-border hover:border-primary/50"
-                        }`}
+                  <label className="text-sm font-medium text-foreground mb-2 block">
+                    Catégories
+                  </label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full justify-between text-left font-normal"
                       >
-                        <Checkbox
-                          id={category}
-                          checked={selectedCategories.includes(category)}
-                          onCheckedChange={() => handleCategoryToggle(category)}
-                        />
-                        <Label
-                          htmlFor={category}
-                          className="flex-1 cursor-pointer text-sm font-medium"
+                        <span>
+                          {selectedCategories.length === 0
+                            ? "Sélectionner des catégories"
+                            : selectedCategories.length === categories.length
+                            ? "Toutes les catégories sélectionnées"
+                            : `${selectedCategories.length} catégorie${selectedCategories.length > 1 ? 's' : ''} sélectionnée${selectedCategories.length > 1 ? 's' : ''}`}
+                        </span>
+                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0 pointer-events-auto" align="start">
+                      <div className="p-3 border-b border-border">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleSelectAll}
+                          className="w-full text-xs"
                         >
-                          {category}
-                          <span className="ml-2 text-xs text-muted-foreground">
-                            ({sites.filter(s => s.category === category).length} sites)
-                          </span>
-                        </Label>
+                          {selectedCategories.length === categories.length ? "Tout désélectionner" : "Tout sélectionner"}
+                        </Button>
                       </div>
-                    ))}
-                  </div>
+                      <div className="max-h-[300px] overflow-y-auto">
+                        <div className="p-3 space-y-2">
+                          {categories.map((category) => (
+                            <div
+                              key={category}
+                              className="flex items-center space-x-3 p-2 rounded-md hover:bg-secondary transition-colors"
+                            >
+                              <Checkbox
+                                id={`category-${category}`}
+                                checked={selectedCategories.includes(category)}
+                                onCheckedChange={() => handleCategoryToggle(category)}
+                              />
+                              <Label
+                                htmlFor={`category-${category}`}
+                                className="flex-1 cursor-pointer text-sm font-medium"
+                              >
+                                {category}
+                                <span className="ml-2 text-xs text-muted-foreground">
+                                  ({sites.filter(s => s.category === category).length} sites)
+                                </span>
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
