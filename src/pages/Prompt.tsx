@@ -11,7 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
 import jsPDF from "jspdf";
-import { Document, Paragraph, TextRun, Packer } from "docx";
+import { Document, Paragraph, TextRun, Packer, ExternalHyperlink } from "docx";
 
 interface SiteEntry {
   category: string;
@@ -98,24 +98,63 @@ export default function Prompt() {
     doc.setFontSize(10);
     doc.text(`Date: ${new Date().toLocaleDateString('fr-FR')}`, margin, 30);
     
-    // Contenu
+    // Contenu avec liens cliquables
     doc.setFontSize(11);
-    const lines = doc.splitTextToSize(result, maxWidth);
+    const lines = result.split('\n');
     
     let y = 40;
-    for (let i = 0; i < lines.length; i++) {
+    for (const line of lines) {
       if (y > pageHeight - margin) {
         doc.addPage();
         y = margin;
       }
-      doc.text(lines[i], margin, y);
-      y += 7;
+      
+      // Détecter les URLs dans le texte
+      const urlMatch = line.match(/🔗\s*URL:\s*(https?:\/\/[^\s]+)/i);
+      if (urlMatch) {
+        const url = urlMatch[1];
+        const textBeforeUrl = line.substring(0, urlMatch.index);
+        
+        // Texte avant l'URL
+        if (textBeforeUrl) {
+          const beforeLines = doc.splitTextToSize(textBeforeUrl, maxWidth);
+          for (const beforeLine of beforeLines) {
+            if (y > pageHeight - margin) {
+              doc.addPage();
+              y = margin;
+            }
+            doc.text(beforeLine, margin, y);
+            y += 7;
+          }
+        }
+        
+        // URL cliquable
+        if (y > pageHeight - margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.setTextColor(0, 0, 255);
+        doc.textWithLink(`🔗 ${url}`, margin, y, { url });
+        doc.setTextColor(0, 0, 0);
+        y += 7;
+      } else {
+        // Ligne normale
+        const wrappedLines = doc.splitTextToSize(line || " ", maxWidth);
+        for (const wrappedLine of wrappedLines) {
+          if (y > pageHeight - margin) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(wrappedLine, margin, y);
+          y += 7;
+        }
+      }
     }
     
     doc.save(`recherche_${new Date().toISOString().split('T')[0]}.pdf`);
     toast({
       title: "Export réussi",
-      description: "Le PDF a été téléchargé",
+      description: "Le PDF a été téléchargé avec liens cliquables",
     });
   };
 
@@ -138,11 +177,44 @@ export default function Prompt() {
   };
 
   const exportToDOCX = async () => {
-    const paragraphs = result.split('\n').map(line => 
-      new Paragraph({
-        children: [new TextRun(line || " ")],
-      })
-    );
+    const lines = result.split('\n');
+    const paragraphs: Paragraph[] = [];
+
+    for (const line of lines) {
+      // Détecter les URLs dans le texte
+      const urlMatch = line.match(/🔗\s*URL:\s*(https?:\/\/[^\s]+)/i);
+      
+      if (urlMatch) {
+        const url = urlMatch[1];
+        const textBefore = line.substring(0, urlMatch.index).trim();
+        
+        // Ajouter le texte avant l'URL s'il existe
+        if (textBefore) {
+          paragraphs.push(new Paragraph({
+            children: [new TextRun(textBefore)],
+          }));
+        }
+        
+        // Ajouter l'URL comme lien cliquable dans un nouveau paragraphe
+        paragraphs.push(new Paragraph({
+          children: [
+            new ExternalHyperlink({
+              children: [
+                new TextRun({
+                  text: `🔗 ${url}`,
+                  style: "Hyperlink",
+                }),
+              ],
+              link: url,
+            }),
+          ],
+        }));
+      } else {
+        paragraphs.push(new Paragraph({
+          children: [new TextRun(line || " ")],
+        }));
+      }
+    }
 
     const doc = new Document({
       sections: [{
@@ -182,7 +254,7 @@ export default function Prompt() {
     document.body.removeChild(link);
     toast({
       title: "Export réussi",
-      description: "Le document DOCX a été téléchargé",
+      description: "Le document DOCX a été téléchargé avec liens cliquables",
     });
   };
 
