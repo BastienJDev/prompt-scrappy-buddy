@@ -63,7 +63,9 @@ export default function Prompt() {
     }
   };
 
-  const categories = Array.from(new Set(sites.map(s => s.category))).filter(Boolean);
+  const categories = Array.from(new Set(sites.map(s => s.category)))
+    .filter(Boolean)
+    .filter(cat => cat !== "Offres sportives");
 
   const handleCategoryToggle = (category: string) => {
     setSelectedCategories(prev =>
