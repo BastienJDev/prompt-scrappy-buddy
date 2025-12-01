@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Progress } from "@/components/ui/progress";
 
 interface SiteEntry {
   category: string;
@@ -24,6 +25,7 @@ export default function Prompt() {
   const [useAI, setUseAI] = useState(true);
   const [sites, setSites] = useState<SiteEntry[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -91,6 +93,15 @@ export default function Prompt() {
 
     setIsLoading(true);
     setResult("");
+    setProgress(0);
+
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) return prev;
+        return prev + 10;
+      });
+    }, 300);
 
     try {
       // Get sites for selected categories
@@ -106,6 +117,7 @@ export default function Prompt() {
 
       if (error) throw error;
 
+      setProgress(100);
       setResult(data.result);
       toast({
         title: "Succès",
@@ -121,7 +133,9 @@ export default function Prompt() {
         variant: "destructive",
       });
     } finally {
+      clearInterval(progressInterval);
       setIsLoading(false);
+      setTimeout(() => setProgress(0), 1000);
     }
   };
 
@@ -305,6 +319,15 @@ export default function Prompt() {
                     </>
                   )}
                 </Button>
+
+                {isLoading && (
+                  <div className="space-y-2">
+                    <Progress value={progress} className="h-2" />
+                    <p className="text-xs text-center text-muted-foreground">
+                      {progress < 30 ? "Connexion aux sites..." : progress < 60 ? "Scraping en cours..." : progress < 90 ? "Traitement des données..." : "Finalisation..."}
+                    </p>
+                  </div>
+                )}
               </div>
             </Card>
 
