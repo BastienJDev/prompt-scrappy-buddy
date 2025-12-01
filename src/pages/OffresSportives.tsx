@@ -60,12 +60,22 @@ export default function OffresSportives() {
 
       setSites(formattedSites);
 
-      // Lancer le scraping
+      // Lancer le scraping avec reformulation IA
+      const promptText = searchQuery || "Extrais toutes les offres d'emploi sportives disponibles";
       const { data, error } = await supabase.functions.invoke('scrape-and-reform', {
         body: {
           sites: formattedSites,
-          prompt: searchQuery || "offres d'emploi sportives disponibles",
-          useAI: false,
+          prompt: `${promptText}. Pour chaque offre, structure les informations ainsi :
+
+**Titre du poste**
+📍 Localisation | 📅 Type de contrat | 💰 Salaire (si disponible)
+
+Description courte de l'offre
+
+🔗 URL: [lien exact de l'offre]
+
+Sépare chaque offre par une ligne vide. Inclus UNIQUEMENT les offres d'emploi actuelles et disponibles.`,
+          useAI: true,
         },
       });
 
