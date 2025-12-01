@@ -19,6 +19,7 @@ import Doctrinal from "./pages/sites-juridiques/Doctrinal";
 import DroitSport from "./pages/sites-juridiques/DroitSport";
 import Cairn from "./pages/sites-juridiques/Cairn";
 import FrancisLefevre from "./pages/sites-juridiques/FrancisLefevre";
+import BibliotequePDF from "./pages/BibliotequePDF";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
                   <Route path="/sites-juridiques/droit-sport" element={<DroitSport />} />
                   <Route path="/sites-juridiques/cairn" element={<Cairn />} />
                   <Route path="/sites-juridiques/francis-lefevre" element={<FrancisLefevre />} />
+                  <Route path="/bibliotheque-pdf" element={<BibliotequePDF />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

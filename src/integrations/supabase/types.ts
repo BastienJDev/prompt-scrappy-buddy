@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      pdf_library: {
+        Row: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          uploaded_at: string
+          user_id: string | null
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          uploaded_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       scraped_sites: {
         Row: {
           category: string
