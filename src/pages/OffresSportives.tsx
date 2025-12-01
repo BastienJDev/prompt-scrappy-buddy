@@ -1,108 +1,134 @@
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trophy, MapPin, Clock, Euro, ExternalLink, Loader2, Search } from "lucide-react";
-import { useState } from "react";
+import { Trophy, Loader2, Search, ExternalLink } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
-interface JobOffer {
-  id: number;
-  titre: string;
-  entreprise: string;
-  localisation: string;
-  type: string;
-  salaire: string;
-  date: string;
-  description: string;
-  lien: string;
-  tags: string[];
+interface SiteEntry {
+  category: string;
+  siteName: string;
+  url: string;
 }
 
 export default function OffresSportives() {
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [result, setResult] = useState("");
+  const [sites, setSites] = useState<SiteEntry[]>([]);
   const { toast } = useToast();
 
-  const offres: JobOffer[] = [
-    {
-      id: 1,
-      titre: "Entraîneur Football",
-      entreprise: "Club Sportif de Paris",
-      localisation: "Paris",
-      type: "CDI",
-      salaire: "35K - 45K €",
-      date: "2025-11-28",
-      description: "Rejoignez notre club pour encadrer les équipes jeunes. Diplôme d'État requis. Expérience en compétition souhaitée.",
-      lien: "#",
-      tags: ["Football", "Jeunes", "Formation", "DE"]
-    },
-    {
-      id: 2,
-      titre: "Préparateur Physique",
-      entreprise: "Centre de Performance",
-      localisation: "Lyon",
-      type: "CDD",
-      salaire: "30K - 38K €",
-      date: "2025-11-27",
-      description: "Préparez les athlètes de haut niveau. Diplôme en STAPS et certifications en préparation physique exigés.",
-      lien: "#",
-      tags: ["Prépa physique", "Haut niveau", "STAPS"]
-    },
-    {
-      id: 3,
-      titre: "Coach Personnel",
-      entreprise: "Fitness Studio Premium",
-      localisation: "Marseille",
-      type: "Freelance",
-      salaire: "35-50 €/h",
-      date: "2025-11-26",
-      description: "Accompagnez nos clients dans l'atteinte de leurs objectifs sportifs et bien-être. CQP ou BPJEPS requis.",
-      lien: "#",
-      tags: ["Coaching", "Fitness", "Bien-être", "CQP"]
-    },
-    {
-      id: 4,
-      titre: "Responsable Marketing Sportif",
-      entreprise: "Équipementier Sportif",
-      localisation: "Toulouse",
-      type: "CDI",
-      salaire: "40K - 50K €",
-      date: "2025-11-25",
-      description: "Développez notre stratégie marketing dans l'univers du sport. Expérience en marketing digital et passion pour le sport requises.",
-      lien: "#",
-      tags: ["Marketing", "Digital", "Sport Business", "Stratégie"]
-    },
-    {
-      id: 5,
-      titre: "Éducateur Sportif Multisports",
-      entreprise: "Association Sportive",
-      localisation: "Nantes",
-      type: "CDI",
-      salaire: "25K - 30K €",
-      date: "2025-11-24",
-      description: "Animez des activités sportives variées pour tous publics. BPJEPS APT ou équivalent exigé.",
-      lien: "#",
-      tags: ["Multisports", "Animation", "BPJEPS", "Tout public"]
+  useEffect(() => {
+    loadSitesAndScrape();
+  }, []);
+
+  const loadSitesAndScrape = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Charger les sites de la catégorie "Offres sportives"
+      const { data: scrapedSites, error: sitesError } = await supabase
+        .from('scraped_sites')
+        .select('*')
+        .eq('category', 'Offres sportives');
+
+      if (sitesError) {
+        console.error('Error loading sites:', sitesError);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les sites sportifs",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!scrapedSites || scrapedSites.length === 0) {
+        toast({
+          title: "Aucun site",
+          description: "Aucun site sportif configuré",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const formattedSites = scrapedSites.map(site => ({
+        category: site.category,
+        siteName: site.site_name,
+        url: site.url || '',
+      }));
+
+      setSites(formattedSites);
+
+      // Lancer le scraping
+      const { data, error } = await supabase.functions.invoke('scrape-and-reform', {
+        body: {
+          sites: formattedSites,
+          prompt: searchQuery || "offres d'emploi sportives disponibles",
+          useAI: false,
+        },
+      });
+
+      if (error) {
+        console.error('Error scraping:', error);
+        toast({
+          title: "Erreur de scraping",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setResult(data.result || "Aucune offre trouvée");
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
-
-  const filteredOffres = offres.filter(offre => {
-    const query = searchQuery.toLowerCase();
-    return (
-      offre.titre.toLowerCase().includes(query) ||
-      offre.entreprise.toLowerCase().includes(query) ||
-      offre.localisation.toLowerCase().includes(query) ||
-      offre.tags.some(tag => tag.toLowerCase().includes(query))
-    );
-  });
-
-  const handleApply = (offre: JobOffer) => {
-    toast({
-      title: "Candidature",
-      description: `Redirection vers l'offre : ${offre.titre}`,
-    });
   };
+
+  const handleSearch = () => {
+    if (sites.length > 0) {
+      loadSitesAndScrape();
+    }
+  };
+
+  // Extraire les URLs du résultat
+  const extractUrls = (text: string): Array<{ text: string; url: string }> => {
+    const urlPattern = /🔗\s*URL:\s*(https?:\/\/[^\s\n]+)/gi;
+    const sections: Array<{ text: string; url: string }> = [];
+    const lines = text.split('\n');
+    
+    let currentSection = '';
+    
+    for (const line of lines) {
+      const urlMatch = line.match(urlPattern);
+      if (urlMatch) {
+        if (currentSection.trim()) {
+          sections.push({
+            text: currentSection.trim(),
+            url: urlMatch[1] || line.match(/https?:\/\/[^\s\n]+/)?.[0] || '#'
+          });
+          currentSection = '';
+        }
+      } else {
+        currentSection += line + '\n';
+      }
+    }
+    
+    if (currentSection.trim()) {
+      sections.push({ text: currentSection.trim(), url: '#' });
+    }
+    
+    return sections;
+  };
+
+  const sections = extractUrls(result);
 
   return (
     <div className="min-h-screen bg-background">
@@ -121,15 +147,29 @@ export default function OffresSportives() {
           </div>
 
           <Card className="border-border p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Rechercher par titre, entreprise, localisation ou compétences..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Rechercher des offres d'emploi sportives..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                  className="pl-10"
+                />
+              </div>
+              <Button 
+                onClick={handleSearch} 
+                disabled={isLoading}
+                className="bg-accent hover:bg-accent/90"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+              </Button>
             </div>
           </Card>
 
@@ -137,87 +177,49 @@ export default function OffresSportives() {
             <Card className="border-border p-12 text-center">
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
               <p className="text-muted-foreground text-lg">
-                Chargement des offres sportives...
+                Recherche des offres sportives en cours...
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Scraping de {sites.length} sites sportifs
               </p>
             </Card>
-          ) : filteredOffres.length === 0 ? (
+          ) : !result ? (
             <Card className="border-border p-12 text-center">
               <Trophy className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground text-lg">
-                {searchQuery ? "Aucune offre ne correspond à votre recherche" : "Aucune offre d'emploi sportive disponible pour le moment"}
+                Cliquez sur rechercher pour trouver des offres d'emploi sportives
               </p>
             </Card>
           ) : (
-            <div className="grid gap-6">
-              {filteredOffres.map((offre, index) => (
+            <div className="space-y-6">
+              {sections.map((section, index) => (
                 <Card 
-                  key={offre.id}
+                  key={index}
                   className="border-border overflow-hidden hover:border-accent/50 transition-all duration-300 hover:shadow-lg"
-                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="p-6 space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="space-y-3 flex-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h2 className="text-2xl font-bold text-foreground">
-                            {offre.titre}
-                          </h2>
-                          <Badge className="bg-accent text-white">
-                            {offre.type}
-                          </Badge>
-                        </div>
-                        
-                        <div className="text-xl font-semibold text-accent">
-                          {offre.entreprise}
-                        </div>
-
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
-                          <div className="flex items-center gap-1">
-                            <MapPin className="w-4 h-4" />
-                            <span>{offre.localisation}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Euro className="w-4 h-4" />
-                            <span>{offre.salaire}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{new Date(offre.date).toLocaleDateString('fr-FR', { 
-                              day: 'numeric', 
-                              month: 'long'
-                            })}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {offre.tags.map((tag, i) => (
-                            <Badge 
-                              key={i}
-                              variant="secondary"
-                              className="bg-secondary/50 text-foreground"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
+                        <Trophy className="w-6 h-6 text-accent" />
+                        <div className="prose prose-sm max-w-none">
+                          <p className="text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                            {section.text}
+                          </p>
                         </div>
                       </div>
-                      
-                      <Trophy className="w-8 h-8 text-accent flex-shrink-0" />
                     </div>
-                    
-                    <p className="text-foreground/80 leading-relaxed">
-                      {offre.description}
-                    </p>
 
-                    <div className="pt-2">
-                      <Button
-                        onClick={() => handleApply(offre)}
-                        className="bg-accent hover:bg-accent/90 text-white"
-                      >
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Postuler
-                      </Button>
-                    </div>
+                    {section.url !== '#' && (
+                      <div className="pt-2 border-t border-border">
+                        <Button
+                          onClick={() => window.open(section.url, '_blank')}
+                          className="bg-accent hover:bg-accent/90 text-white"
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Voir l'offre
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="h-1 bg-gradient-to-r from-accent/50 via-primary/50 to-transparent" />
