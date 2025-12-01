@@ -2,11 +2,12 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Briefcase, MapPin, Clock, Euro, ExternalLink, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface JobOffer {
-  id: number;
+  id: string;
   titre: string;
   entreprise: string;
   localisation: string;
@@ -19,65 +20,59 @@ interface JobOffer {
 }
 
 export default function OffresGenerales() {
-  const [isLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [offres, setOffres] = useState<JobOffer[]>([]);
   const { toast } = useToast();
 
-  const offres: JobOffer[] = [
-    {
-      id: 1,
-      titre: "Développeur Full Stack",
-      entreprise: "TechCorp",
-      localisation: "Paris",
-      type: "CDI",
-      salaire: "45K - 55K €",
-      date: "2025-11-28",
-      description: "Nous recherchons un développeur Full Stack expérimenté pour rejoindre notre équipe dynamique. Vous travaillerez sur des projets innovants utilisant React, Node.js et PostgreSQL.",
-      lien: "#",
-      tags: ["React", "Node.js", "PostgreSQL", "TypeScript"]
-    },
-    {
-      id: 2,
-      titre: "Chef de Projet Digital",
-      entreprise: "Digital Agency",
-      localisation: "Lyon",
-      type: "CDI",
-      salaire: "40K - 50K €",
-      date: "2025-11-27",
-      description: "Rejoignez notre agence pour piloter des projets web ambitieux. Vous serez en charge de la coordination des équipes et de la relation client.",
-      lien: "#",
-      tags: ["Gestion de projet", "Agile", "Client"]
-    },
-    {
-      id: 3,
-      titre: "Data Analyst",
-      entreprise: "DataCo",
-      localisation: "Télétravail",
-      type: "CDD",
-      salaire: "35K - 40K €",
-      date: "2025-11-26",
-      description: "Analysez les données pour extraire des insights pertinents. Maîtrise de SQL, Python et des outils de visualisation requise.",
-      lien: "#",
-      tags: ["SQL", "Python", "Data Viz", "Business Intelligence"]
-    },
-    {
-      id: 4,
-      titre: "Designer UX/UI",
-      entreprise: "Creative Studio",
-      localisation: "Bordeaux",
-      type: "Freelance",
-      salaire: "400-500 €/jour",
-      date: "2025-11-25",
-      description: "Créez des expériences utilisateur exceptionnelles pour nos clients. Portfolio requis.",
-      lien: "#",
-      tags: ["Figma", "Sketch", "Prototypage", "Design System"]
+  useEffect(() => {
+    loadOffers();
+  }, []);
+
+  const loadOffers = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.functions.invoke('france-travail', {
+        body: { query: '' }
+      });
+
+      if (error) throw error;
+
+      if (data?.offers) {
+        const formattedOffers: JobOffer[] = data.offers.map((offer: any) => ({
+          id: offer.id,
+          titre: offer.intitule,
+          entreprise: offer.entreprise?.nom || 'Non renseigné',
+          localisation: offer.lieuTravail?.libelle || 'Non renseigné',
+          type: offer.typeContrat || 'Non renseigné',
+          salaire: offer.salaire?.libelle || 'Non renseigné',
+          date: offer.dateCreation,
+          description: offer.description || 'Aucune description disponible',
+          lien: offer.origineOffre?.urlOrigine || '#',
+          tags: offer.competences?.slice(0, 4).map((c: any) => c.libelle) || []
+        }));
+        setOffres(formattedOffers);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des offres:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de charger les offres d'emploi",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
 
   const handleApply = (offre: JobOffer) => {
-    toast({
-      title: "Candidature",
-      description: `Redirection vers l'offre : ${offre.titre}`,
-    });
+    if (offre.lien && offre.lien !== '#') {
+      window.open(offre.lien, '_blank');
+    } else {
+      toast({
+        title: "Candidature",
+        description: `Offre : ${offre.titre}`,
+      });
+    }
   };
 
   return (
@@ -101,6 +96,13 @@ export default function OffresGenerales() {
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
               <p className="text-muted-foreground text-lg">
                 Chargement des offres...
+              </p>
+            </Card>
+          ) : offres.length === 0 ? (
+            <Card className="border-border p-12 text-center">
+              <Briefcase className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground text-lg">
+                Aucune offre d'emploi disponible pour le moment
               </p>
             </Card>
           ) : (
