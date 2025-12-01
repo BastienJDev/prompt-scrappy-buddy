@@ -1,7 +1,8 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MapPin, Clock, Euro, ExternalLink, Loader2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Briefcase, MapPin, Clock, Euro, ExternalLink, Loader2, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +23,7 @@ interface JobOffer {
 export default function OffresGenerales() {
   const [isLoading, setIsLoading] = useState(true);
   const [offres, setOffres] = useState<JobOffer[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -64,6 +66,16 @@ export default function OffresGenerales() {
     }
   };
 
+  const filteredOffres = offres.filter(offre => {
+    const query = searchQuery.toLowerCase();
+    return (
+      offre.titre.toLowerCase().includes(query) ||
+      offre.entreprise.toLowerCase().includes(query) ||
+      offre.localisation.toLowerCase().includes(query) ||
+      offre.tags.some(tag => tag.toLowerCase().includes(query))
+    );
+  });
+
   const handleApply = (offre: JobOffer) => {
     if (offre.lien && offre.lien !== '#') {
       window.open(offre.lien, '_blank');
@@ -91,6 +103,19 @@ export default function OffresGenerales() {
             </p>
           </div>
 
+          <Card className="border-border p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Rechercher par titre, entreprise, localisation ou compétences..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </Card>
+
           {isLoading ? (
             <Card className="border-border p-12 text-center">
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
@@ -98,16 +123,16 @@ export default function OffresGenerales() {
                 Chargement des offres...
               </p>
             </Card>
-          ) : offres.length === 0 ? (
+          ) : filteredOffres.length === 0 ? (
             <Card className="border-border p-12 text-center">
               <Briefcase className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <p className="text-muted-foreground text-lg">
-                Aucune offre d'emploi disponible pour le moment
+                {searchQuery ? "Aucune offre ne correspond à votre recherche" : "Aucune offre d'emploi disponible pour le moment"}
               </p>
             </Card>
           ) : (
             <div className="grid gap-6">
-              {offres.map((offre, index) => (
+              {filteredOffres.map((offre, index) => (
                 <Card 
                   key={offre.id}
                   className="border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
