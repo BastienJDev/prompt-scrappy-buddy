@@ -22,7 +22,6 @@ import {
 
 const items = [
   { title: "Accueil", url: "/prompt", icon: MessageSquare },
-  { title: "Import", url: "/", icon: Upload },
 ];
 
 const actualitesItems = [
@@ -98,6 +97,20 @@ export function AppSidebar() {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/"
+                    end
+                    className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3"
+                    activeClassName="bg-white/20 text-white font-semibold shadow-lg"
+                  >
+                    <Upload className="w-6 h-6" />
+                    {open && <span className="text-base">Gestion des sites</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
