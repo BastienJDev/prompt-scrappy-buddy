@@ -26,11 +26,11 @@ export function AppSidebar() {
         <div className="p-4 border-b border-sidebar-border/30">
           <div className="flex items-center space-x-2">
             <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center shadow-lg border border-white/20">
-              <span className="text-xl font-bold text-white">S</span>
+              <span className="text-xl font-bold text-white">E</span>
             </div>
             {open && (
               <span className="text-lg font-bold text-white drop-shadow-lg">
-                ScrapReform
+                Enzo P.
               </span>
             )}
           </div>
