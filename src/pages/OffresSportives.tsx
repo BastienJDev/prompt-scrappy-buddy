@@ -1,7 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Briefcase, MapPin, Clock, Euro, ExternalLink, Loader2 } from "lucide-react";
+import { Trophy, MapPin, Clock, Euro, ExternalLink, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,59 +18,70 @@ interface JobOffer {
   tags: string[];
 }
 
-export default function OffresEmploi() {
+export default function OffresSportives() {
   const [isLoading] = useState(false);
   const { toast } = useToast();
 
-  // Données d'exemple - à remplacer par un scraping réel
   const offres: JobOffer[] = [
     {
       id: 1,
-      titre: "Développeur Full Stack",
-      entreprise: "TechCorp",
+      titre: "Entraîneur Football",
+      entreprise: "Club Sportif de Paris",
       localisation: "Paris",
       type: "CDI",
-      salaire: "45K - 55K €",
+      salaire: "35K - 45K €",
       date: "2025-11-28",
-      description: "Nous recherchons un développeur Full Stack expérimenté pour rejoindre notre équipe dynamique. Vous travaillerez sur des projets innovants utilisant React, Node.js et PostgreSQL.",
+      description: "Rejoignez notre club pour encadrer les équipes jeunes. Diplôme d'État requis. Expérience en compétition souhaitée.",
       lien: "#",
-      tags: ["React", "Node.js", "PostgreSQL", "TypeScript"]
+      tags: ["Football", "Jeunes", "Formation", "DE"]
     },
     {
       id: 2,
-      titre: "Chef de Projet Digital",
-      entreprise: "Digital Agency",
+      titre: "Préparateur Physique",
+      entreprise: "Centre de Performance",
       localisation: "Lyon",
-      type: "CDI",
-      salaire: "40K - 50K €",
+      type: "CDD",
+      salaire: "30K - 38K €",
       date: "2025-11-27",
-      description: "Rejoignez notre agence pour piloter des projets web ambitieux. Vous serez en charge de la coordination des équipes et de la relation client.",
+      description: "Préparez les athlètes de haut niveau. Diplôme en STAPS et certifications en préparation physique exigés.",
       lien: "#",
-      tags: ["Gestion de projet", "Agile", "Client"]
+      tags: ["Prépa physique", "Haut niveau", "STAPS"]
     },
     {
       id: 3,
-      titre: "Data Analyst",
-      entreprise: "DataCo",
-      localisation: "Télétravail",
-      type: "CDD",
-      salaire: "35K - 40K €",
+      titre: "Coach Personnel",
+      entreprise: "Fitness Studio Premium",
+      localisation: "Marseille",
+      type: "Freelance",
+      salaire: "35-50 €/h",
       date: "2025-11-26",
-      description: "Analysez les données pour extraire des insights pertinents. Maîtrise de SQL, Python et des outils de visualisation requise.",
+      description: "Accompagnez nos clients dans l'atteinte de leurs objectifs sportifs et bien-être. CQP ou BPJEPS requis.",
       lien: "#",
-      tags: ["SQL", "Python", "Data Viz", "Business Intelligence"]
+      tags: ["Coaching", "Fitness", "Bien-être", "CQP"]
     },
     {
       id: 4,
-      titre: "Designer UX/UI",
-      entreprise: "Creative Studio",
-      localisation: "Bordeaux",
-      type: "Freelance",
-      salaire: "400-500 €/jour",
+      titre: "Responsable Marketing Sportif",
+      entreprise: "Équipementier Sportif",
+      localisation: "Toulouse",
+      type: "CDI",
+      salaire: "40K - 50K €",
       date: "2025-11-25",
-      description: "Créez des expériences utilisateur exceptionnelles pour nos clients. Portfolio requis.",
+      description: "Développez notre stratégie marketing dans l'univers du sport. Expérience en marketing digital et passion pour le sport requises.",
       lien: "#",
-      tags: ["Figma", "Sketch", "Prototypage", "Design System"]
+      tags: ["Marketing", "Digital", "Sport Business", "Stratégie"]
+    },
+    {
+      id: 5,
+      titre: "Éducateur Sportif Multisports",
+      entreprise: "Association Sportive",
+      localisation: "Nantes",
+      type: "CDI",
+      salaire: "25K - 30K €",
+      date: "2025-11-24",
+      description: "Animez des activités sportives variées pour tous publics. BPJEPS APT ou équivalent exigé.",
+      lien: "#",
+      tags: ["Multisports", "Animation", "BPJEPS", "Tout public"]
     }
   ];
 
@@ -88,12 +99,12 @@ export default function OffresEmploi() {
           <div className="text-center space-y-4">
             <div className="relative inline-block">
               <div className="absolute inset-0 bg-accent/20 rounded-full blur-3xl animate-glow-pulse" />
-              <h1 className="relative text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-primary-glow to-accent bg-clip-text text-transparent">
-                Offres d'emploi
+              <h1 className="relative text-4xl md:text-5xl font-bold bg-gradient-to-r from-accent via-accent-glow to-primary bg-clip-text text-transparent">
+                Offres d'emploi sportives
               </h1>
             </div>
             <p className="text-muted-foreground text-lg">
-              Découvrez les opportunités professionnelles
+              Les opportunités dans le monde du sport
             </p>
           </div>
 
@@ -101,7 +112,7 @@ export default function OffresEmploi() {
             <Card className="border-border p-12 text-center">
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
               <p className="text-muted-foreground text-lg">
-                Chargement des offres...
+                Chargement des offres sportives...
               </p>
             </Card>
           ) : (
@@ -109,7 +120,7 @@ export default function OffresEmploi() {
               {offres.map((offre, index) => (
                 <Card 
                   key={offre.id}
-                  className="border-border overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-lg"
+                  className="border-border overflow-hidden hover:border-accent/50 transition-all duration-300 hover:shadow-lg"
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div className="p-6 space-y-4">
@@ -119,12 +130,12 @@ export default function OffresEmploi() {
                           <h2 className="text-2xl font-bold text-foreground">
                             {offre.titre}
                           </h2>
-                          <Badge className="bg-primary text-white">
+                          <Badge className="bg-accent text-white">
                             {offre.type}
                           </Badge>
                         </div>
                         
-                        <div className="text-xl font-semibold text-primary">
+                        <div className="text-xl font-semibold text-accent">
                           {offre.entreprise}
                         </div>
 
@@ -159,7 +170,7 @@ export default function OffresEmploi() {
                         </div>
                       </div>
                       
-                      <Briefcase className="w-8 h-8 text-primary flex-shrink-0" />
+                      <Trophy className="w-8 h-8 text-accent flex-shrink-0" />
                     </div>
                     
                     <p className="text-foreground/80 leading-relaxed">
@@ -169,7 +180,7 @@ export default function OffresEmploi() {
                     <div className="pt-2">
                       <Button
                         onClick={() => handleApply(offre)}
-                        className="bg-primary hover:bg-primary/90 text-white"
+                        className="bg-accent hover:bg-accent/90 text-white"
                       >
                         <ExternalLink className="w-4 h-4 mr-2" />
                         Postuler
@@ -177,19 +188,19 @@ export default function OffresEmploi() {
                     </div>
                   </div>
                   
-                  <div className="h-1 bg-gradient-to-r from-primary/50 via-accent/50 to-transparent" />
+                  <div className="h-1 bg-gradient-to-r from-accent/50 via-primary/50 to-transparent" />
                 </Card>
               ))}
             </div>
           )}
 
-          <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 p-8 text-center">
-            <Briefcase className="w-12 h-12 mx-auto mb-4 text-primary" />
+          <Card className="border-accent/30 bg-gradient-to-br from-accent/5 to-primary/5 p-8 text-center">
+            <Trophy className="w-12 h-12 mx-auto mb-4 text-accent" />
             <h3 className="text-xl font-bold text-foreground mb-2">
-              Configurez vos alertes
+              Configurez vos alertes sportives
             </h3>
             <p className="text-muted-foreground mb-4">
-              Utilisez la page Gestion des sites pour ajouter vos sites d'emploi préférés et recevoir les dernières offres automatiquement.
+              Utilisez la page Gestion des sites pour ajouter vos sites d'emploi sportifs préférés et recevoir les dernières offres automatiquement.
             </p>
             <Button 
               variant="outline"
