@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
+  { title: "Accueil", url: "/prompt", icon: MessageSquare },
   { title: "Import", url: "/", icon: Upload },
-  { title: "Prompt", url: "/prompt", icon: MessageSquare },
 ];
 
 export function AppSidebar() {
