@@ -11,7 +11,14 @@ import ActualitesGenerales from "./pages/ActualitesGenerales";
 import ActualitesSportives from "./pages/ActualitesSportives";
 import OffresGenerales from "./pages/OffresGenerales";
 import OffresSportives from "./pages/OffresSportives";
-import SiteJuridique from "./pages/SiteJuridique";
+import Dalloz from "./pages/sites-juridiques/Dalloz";
+import Lexis360 from "./pages/sites-juridiques/Lexis360";
+import Lamyline from "./pages/sites-juridiques/Lamyline";
+import Lextenso from "./pages/sites-juridiques/Lextenso";
+import Doctrinal from "./pages/sites-juridiques/Doctrinal";
+import DroitSport from "./pages/sites-juridiques/DroitSport";
+import Cairn from "./pages/sites-juridiques/Cairn";
+import FrancisLefevre from "./pages/sites-juridiques/FrancisLefevre";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,7 +44,14 @@ const App = () => (
                   <Route path="/actualites/sportives" element={<ActualitesSportives />} />
                   <Route path="/offres/generales" element={<OffresGenerales />} />
                   <Route path="/offres/sportives" element={<OffresSportives />} />
-                  <Route path="/site-juridique" element={<SiteJuridique />} />
+                  <Route path="/sites-juridiques/dalloz" element={<Dalloz />} />
+                  <Route path="/sites-juridiques/lexis-360" element={<Lexis360 />} />
+                  <Route path="/sites-juridiques/lamyline" element={<Lamyline />} />
+                  <Route path="/sites-juridiques/lextenso" element={<Lextenso />} />
+                  <Route path="/sites-juridiques/doctrinal" element={<Doctrinal />} />
+                  <Route path="/sites-juridiques/droit-sport" element={<DroitSport />} />
+                  <Route path="/sites-juridiques/cairn" element={<Cairn />} />
+                  <Route path="/sites-juridiques/francis-lefevre" element={<FrancisLefevre />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
