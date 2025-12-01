@@ -182,7 +182,7 @@ export default function Prompt() {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground block">
-                    {useAI ? "Que recherchez-vous ?" : "Instructions de scraping"}
+                    {useAI ? "Faites votre recherche" : "Instructions de scraping"}
                   </label>
                   <Textarea
                     placeholder={
