@@ -2,10 +2,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Upload, Trash2, Send, Loader2, BookOpen } from "lucide-react";
+import { FileText, Upload, Trash2, Send, Loader2, BookOpen, Search, MessageSquare } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface PDF {
   id: string;
@@ -29,6 +30,9 @@ export default function BibliotequePDF() {
   const [inputMessage, setInputMessage] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [selectedPdfs, setSelectedPdfs] = useState<string[]>([]);
+  const [searchPrompt, setSearchPrompt] = useState("");
+  const [searchResults, setSearchResults] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -249,6 +253,70 @@ ${pdf.content}
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchPrompt.trim() || selectedPdfs.length === 0) {
+      toast({
+        title: "Attention",
+        description: "Veuillez sélectionner au moins un PDF et saisir une recherche",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchResults(null);
+
+    try {
+      // Récupérer le contenu textuel des PDFs sélectionnés
+      const { data: selectedPdfsData, error: fetchError } = await supabase
+        .from("pdf_library")
+        .select("*")
+        .in("id", selectedPdfs);
+
+      if (fetchError) throw fetchError;
+
+      // Construire le contenu avec le texte extrait
+      const pdfContent = selectedPdfsData
+        .map((pdf: any) => {
+          if (pdf.content) {
+            return `
+=== Document: ${pdf.file_name} ===
+${pdf.content}
+============================================
+`;
+          } else {
+            return `
+=== Document: ${pdf.file_name} ===
+[ATTENTION: Le contenu de ce document n'a pas encore été extrait.]
+============================================
+`;
+          }
+        })
+        .join("\n\n");
+
+      const { data, error } = await supabase.functions.invoke("pdf-chat", {
+        body: {
+          messages: [{ role: "user", content: searchPrompt }],
+          pdfContent,
+          isSearch: true,
+        },
+      });
+
+      if (error) throw error;
+
+      setSearchResults(data.response);
+    } catch (error) {
+      console.error("Erreur lors de la recherche:", error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'effectuer la recherche",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const togglePdfSelection = (pdfId: string) => {
     setSelectedPdfs(prev =>
       prev.includes(pdfId)
@@ -353,79 +421,136 @@ ${pdf.content}
               </div>
             </Card>
 
-            {/* Chat Interface */}
+            {/* Interface avec onglets */}
             <Card className="md:col-span-2 p-6 border-border flex flex-col">
-              <h2 className="text-xl font-bold text-foreground mb-4">
-                Assistant Juridique IA
-              </h2>
-
               {selectedPdfs.length === 0 ? (
-                <div className="flex-1 flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center min-h-[400px]">
                   <p className="text-muted-foreground text-center">
                     Sélectionnez un ou plusieurs documents pour commencer
                   </p>
                 </div>
               ) : (
-                <>
-                  <div className="flex-1 space-y-4 mb-4 overflow-y-auto max-h-[500px]">
-                    {messages.length === 0 ? (
-                      <div className="flex items-center justify-center h-full">
-                        <p className="text-muted-foreground text-center">
-                          Posez votre première question sur les documents sélectionnés
-                        </p>
+                <Tabs defaultValue="search" className="flex-1 flex flex-col">
+                  <TabsList className="grid w-full grid-cols-2 mb-4">
+                    <TabsTrigger value="search" className="flex items-center gap-2">
+                      <Search className="w-4 h-4" />
+                      Recherche
+                    </TabsTrigger>
+                    <TabsTrigger value="chat" className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4" />
+                      Chat IA
+                    </TabsTrigger>
+                  </TabsList>
+
+                  {/* Onglet Recherche */}
+                  <TabsContent value="search" className="flex-1 flex flex-col space-y-4">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-foreground mb-2 block">
+                          Votre recherche
+                        </label>
+                        <Textarea
+                          value={searchPrompt}
+                          onChange={(e) => setSearchPrompt(e.target.value)}
+                          placeholder="Ex: Quelles sont les clauses de non-concurrence dans ce contrat ?"
+                          className="resize-none"
+                          rows={3}
+                          disabled={isSearching}
+                        />
                       </div>
-                    ) : (
-                      messages.map((message, index) => (
-                        <div
-                          key={index}
-                          className={`p-4 rounded-lg ${
-                            message.role === "user"
-                              ? "bg-primary/10 ml-8"
-                              : "bg-secondary/50 mr-8"
-                          }`}
-                        >
-                          <p className="text-sm font-medium mb-1 text-foreground">
-                            {message.role === "user" ? "Vous" : "Assistant"}
-                          </p>
-                          <p className="text-foreground/90 whitespace-pre-wrap">
-                            {message.content}
+                      <Button
+                        onClick={handleSearch}
+                        disabled={isSearching || !searchPrompt.trim()}
+                        className="w-full bg-gradient-to-r from-primary to-accent hover:shadow-[0_0_20px_rgba(0,200,255,0.4)]"
+                      >
+                        {isSearching ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Analyse en cours...
+                          </>
+                        ) : (
+                          <>
+                            <Search className="w-4 h-4 mr-2" />
+                            Rechercher dans les PDFs
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {searchResults && (
+                      <div className="flex-1 overflow-y-auto max-h-[400px]">
+                        <div className="p-4 rounded-lg bg-secondary/50 border border-border">
+                          <h3 className="text-sm font-medium text-foreground mb-2">Résultats</h3>
+                          <div className="text-foreground/90 whitespace-pre-wrap text-sm">
+                            {searchResults}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {/* Onglet Chat */}
+                  <TabsContent value="chat" className="flex-1 flex flex-col">
+                    <div className="flex-1 space-y-4 mb-4 overflow-y-auto max-h-[400px]">
+                      {messages.length === 0 ? (
+                        <div className="flex items-center justify-center h-full min-h-[200px]">
+                          <p className="text-muted-foreground text-center">
+                            Posez votre première question sur les documents sélectionnés
                           </p>
                         </div>
-                      ))
-                    )}
-                    {isAiLoading && (
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">L'assistant réfléchit...</span>
-                      </div>
-                    )}
-                    <div ref={messagesEndRef} />
-                  </div>
+                      ) : (
+                        messages.map((message, index) => (
+                          <div
+                            key={index}
+                            className={`p-4 rounded-lg ${
+                              message.role === "user"
+                                ? "bg-primary/10 ml-8"
+                                : "bg-secondary/50 mr-8"
+                            }`}
+                          >
+                            <p className="text-sm font-medium mb-1 text-foreground">
+                              {message.role === "user" ? "Vous" : "Assistant"}
+                            </p>
+                            <p className="text-foreground/90 whitespace-pre-wrap">
+                              {message.content}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                      {isAiLoading && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-sm">L'assistant réfléchit...</span>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
 
-                  <div className="flex gap-2">
-                    <Textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          handleSendMessage();
-                        }
-                      }}
-                      placeholder="Posez votre question sur les documents..."
-                      className="resize-none"
-                      rows={3}
-                      disabled={isAiLoading}
-                    />
-                    <Button
-                      onClick={handleSendMessage}
-                      disabled={isAiLoading || !inputMessage.trim()}
-                      className="bg-primary hover:bg-primary/90"
-                    >
-                      <Send className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </>
+                    <div className="flex gap-2">
+                      <Textarea
+                        value={inputMessage}
+                        onChange={(e) => setInputMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendMessage();
+                          }
+                        }}
+                        placeholder="Posez votre question sur les documents..."
+                        className="resize-none"
+                        rows={3}
+                        disabled={isAiLoading}
+                      />
+                      <Button
+                        onClick={handleSendMessage}
+                        disabled={isAiLoading || !inputMessage.trim()}
+                        className="bg-primary hover:bg-primary/90"
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TabsContent>
+                </Tabs>
               )}
             </Card>
           </div>

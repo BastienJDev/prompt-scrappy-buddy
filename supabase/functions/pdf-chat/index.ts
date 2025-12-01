@@ -11,16 +11,40 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, pdfContent } = await req.json();
+    const { messages, pdfContent, isSearch } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Processing PDF chat request...");
+    console.log("Processing PDF request...", { isSearch });
 
-    const systemPrompt = `Tu es un assistant juridique expert. Tu as accès au contenu d'un ou plusieurs documents PDF juridiques.
+    let systemPrompt: string;
+
+    if (isSearch) {
+      // Mode recherche : extraction d'informations pertinentes uniquement
+      systemPrompt = `Tu es un assistant expert en analyse documentaire. Tu as accès au contenu de documents PDF.
+
+Contenu des PDFs:
+${pdfContent}
+
+INSTRUCTIONS CRITIQUES POUR LA RECHERCHE:
+1. Tu dois UNIQUEMENT extraire et retourner les informations PERTINENTES vis-à-vis de la recherche de l'utilisateur.
+2. Ignore TOUT ce qui n'est pas directement lié à la recherche.
+3. Pour CHAQUE information extraite, tu DOIS citer la source EXACTE avec le format: [Source: nom_du_fichier.pdf]
+4. Si plusieurs passages sont pertinents, liste-les tous de manière structurée.
+5. Si aucune information pertinente n'est trouvée, dis clairement "Aucune information correspondante trouvée dans les documents."
+6. Réponds UNIQUEMENT en français.
+7. Sois concis et va droit au but - pas de texte superflu.
+
+Format de réponse souhaité:
+• Information pertinente 1 [Source: fichier.pdf]
+• Information pertinente 2 [Source: fichier.pdf]
+...`;
+    } else {
+      // Mode chat : conversation avec l'assistant
+      systemPrompt = `Tu es un assistant juridique expert. Tu as accès au contenu d'un ou plusieurs documents PDF juridiques.
 
 Contenu des PDFs:
 ${pdfContent}
@@ -35,6 +59,7 @@ INSTRUCTIONS CRITIQUES:
 Exemple de réponse correcte:
 "L'article 1240 du Code civil énonce que... [Source: code_civil.pdf]
 En jurisprudence, la Cour de cassation a précisé que... [Source: jurisprudence_2024.pdf]"`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
