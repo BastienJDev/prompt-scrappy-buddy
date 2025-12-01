@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, TrendingUp, Trophy } from "lucide-react";
+import { EmailPreview } from "@/components/EmailPreview";
 
 export default function ActualitesSportives() {
   const actualites = [
@@ -56,6 +57,9 @@ export default function ActualitesSportives() {
             <p className="text-muted-foreground text-lg">
               Toutes les actualités du monde du sport
             </p>
+            <div className="mt-6">
+              <EmailPreview actualites={actualites} />
+            </div>
           </div>
 
           <div className="grid gap-6">
