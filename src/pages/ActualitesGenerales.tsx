@@ -20,11 +20,11 @@ export default function ActualitesGenerales() {
             sites: [
               {
                 category: "Actualités générales",
-                siteName: "Les Échos",
-                url: "https://www.lesechos.fr/"
+                siteName: "Le Monde",
+                url: "https://www.lemonde.fr/"
               }
             ],
-            prompt: "Extraire les dernières actualités économiques et générales",
+            prompt: "Extraire les dernières actualités générales et économiques",
             useAI: true
           }
         });
@@ -77,7 +77,7 @@ export default function ActualitesGenerales() {
             <Card className="border-border p-12 text-center">
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
               <p className="text-muted-foreground text-lg">
-                Chargement des actualités des Échos...
+                Chargement des actualités du Monde...
               </p>
             </Card>
           ) : actualites ? (
@@ -86,7 +86,7 @@ export default function ActualitesGenerales() {
                 <div className="flex items-center gap-3 mb-4">
                   <Sparkles className="w-6 h-6 text-primary" />
                   <h2 className="text-2xl font-bold text-foreground">
-                    Les Échos - Actualités du jour
+                    Le Monde - Actualités du jour
                   </h2>
                   <Badge className="bg-primary text-white">En direct</Badge>
                 </div>
