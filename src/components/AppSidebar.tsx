@@ -1,4 +1,4 @@
-import { Upload, MessageSquare } from "lucide-react";
+import { Upload, MessageSquare, Newspaper } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
 const items = [
   { title: "Accueil", url: "/prompt", icon: MessageSquare },
   { title: "Import", url: "/", icon: Upload },
+  { title: "Actualités", url: "/actualites", icon: Newspaper },
 ];
 
 export function AppSidebar() {
