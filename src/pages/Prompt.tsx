@@ -270,7 +270,7 @@ export default function Prompt() {
 
                 <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
                   <div className="flex items-center space-x-3">
-                    <Sparkles className={`w-5 h-5 ${useAI ? "text-accent" : "text-muted-foreground"}`} />
+                    <Sparkles className={`w-5 h-5 ${useAI ? "text-[hsl(235,45%,15%)]" : "text-muted-foreground"}`} />
                     <div>
                       <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
                         Reformulation IA
@@ -284,13 +284,14 @@ export default function Prompt() {
                     id="ai-toggle"
                     checked={useAI}
                     onCheckedChange={setUseAI}
+                    className="data-[state=checked]:bg-[hsl(235,45%,15%)]"
                   />
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-accent to-accent-glow hover:shadow-[0_0_20px_rgba(255,153,0,0.4)] transition-all"
+                  className="w-full bg-[hsl(235,45%,15%)] hover:bg-[hsl(235,45%,20%)] hover:shadow-[0_0_20px_rgba(20,25,70,0.5)] transition-all text-white"
                 >
                   {isLoading ? (
                     <>
