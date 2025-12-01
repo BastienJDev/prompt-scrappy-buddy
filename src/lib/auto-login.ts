@@ -43,5 +43,13 @@ export const SITE_CONFIGS = {
   droitdusport: {
     name: "Droit du Sport",
     startUrl: "http://droitdusport.com/"
+  },
+  francislefebvre: {
+    name: "Francis Lefebvre",
+    startUrl: "https://catalogue-bu.u-bourgogne.fr/discovery/dbsearch?vid=33UB_INST:33UB_INST&lang=fr"
+  },
+  lextenso: {
+    name: "La Base Lextenso",
+    startUrl: "https://catalogue-bu.u-bourgogne.fr/discovery/dbsearch?vid=33UB_INST:33UB_INST&lang=fr"
   }
 } as const;
