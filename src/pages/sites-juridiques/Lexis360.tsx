@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Scale, ExternalLink, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { triggerAutoLogin, SITE_CONFIGS } from "@/lib/auto-login";
 
 export default function Lexis360() {
   return (
@@ -54,7 +55,10 @@ export default function Lexis360() {
                 </ul>
               </div>
 
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white">
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+                onClick={() => triggerAutoLogin('lexisnexis', SITE_CONFIGS.lexisnexis.startUrl)}
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Accéder à Lexis 360
               </Button>

@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Scale, ExternalLink, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { triggerAutoLogin, SITE_CONFIGS } from "@/lib/auto-login";
 
 export default function Dalloz() {
   return (
@@ -54,7 +55,10 @@ export default function Dalloz() {
                 </ul>
               </div>
 
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white">
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+                onClick={() => triggerAutoLogin('dalloz', SITE_CONFIGS.dalloz.startUrl)}
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Accéder à Dalloz
               </Button>
