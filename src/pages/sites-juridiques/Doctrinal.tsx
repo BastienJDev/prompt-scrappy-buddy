@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Scale, ExternalLink, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { triggerAutoLogin, SITE_CONFIGS } from "@/lib/auto-login";
 
 export default function Doctrinal() {
   return (
@@ -54,7 +55,10 @@ export default function Doctrinal() {
                 </ul>
               </div>
 
-              <Button className="w-full bg-primary hover:bg-primary/90 text-white">
+              <Button 
+                className="w-full bg-primary hover:bg-primary/90 text-white"
+                onClick={() => triggerAutoLogin('ledoctrinal', SITE_CONFIGS.ledoctrinal.startUrl)}
+              >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Accéder au Doctrinal
               </Button>
