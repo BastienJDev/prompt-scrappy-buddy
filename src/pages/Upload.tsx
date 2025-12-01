@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus, X } from "lucide-react";
+import { Upload as UploadIcon, FileSpreadsheet, Loader2, Trash2, Plus, X, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import * as XLSX from "xlsx";
@@ -249,6 +249,33 @@ export default function Upload() {
     }
   };
 
+  const handleExportXLS = () => {
+    if (sites.length === 0) {
+      toast({
+        title: "Attention",
+        description: "Aucun site à exporter",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const data = sites.map(site => ({
+      category: site.category,
+      siteName: site.siteName,
+      url: site.url,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Sites");
+    XLSX.writeFile(wb, `sites-${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+    toast({
+      title: "Export réussi",
+      description: "Le fichier XLS a été téléchargé",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <main className="pt-8 px-4 pb-12">
@@ -319,6 +346,15 @@ export default function Upload() {
                   Sites enregistrés ({sites.length})
                 </h2>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleExportXLS}
+                    className="hover:shadow-[0_0_15px_rgba(0,200,255,0.3)]"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Export XLS
+                  </Button>
                   <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                       <Button
