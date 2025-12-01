@@ -46,21 +46,21 @@ All colors MUST be HSL.
     --shadow-glow-accent: 0 0 40px hsl(280 100% 60% / 0.4);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 195 100% 50%;
+    --sidebar-background: 215 50% 15%;
 
     --sidebar-foreground: 0 0% 100%;
 
     --sidebar-primary: 0 0% 100%;
 
-    --sidebar-primary-foreground: 195 100% 50%;
+    --sidebar-primary-foreground: 215 50% 15%;
 
-    --sidebar-accent: 195 100% 60%;
+    --sidebar-accent: 215 50% 25%;
 
     --sidebar-accent-foreground: 0 0% 100%;
 
-    --sidebar-border: 195 100% 40%;
+    --sidebar-border: 215 50% 10%;
 
-    --sidebar-ring: 195 100% 70%;
+    --sidebar-ring: 195 100% 50%;
   }
 
   .dark {
@@ -94,14 +94,14 @@ All colors MUST be HSL.
     --input: 210 30% 12%;
     --ring: 195 100% 50%;
     
-    --sidebar-background: 195 100% 50%;
+    --sidebar-background: 215 50% 15%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 195 100% 50%;
-    --sidebar-accent: 195 100% 60%;
+    --sidebar-primary-foreground: 215 50% 15%;
+    --sidebar-accent: 215 50% 25%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 195 100% 40%;
-    --sidebar-ring: 195 100% 70%;
+    --sidebar-border: 215 50% 10%;
+    --sidebar-ring: 195 100% 50%;
   }
 }
 
