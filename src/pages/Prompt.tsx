@@ -182,6 +182,51 @@ export default function Prompt() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <Card className="border-border p-6">
               <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground block">
+                    {useAI ? "Que recherchez-vous ?" : "Instructions de scraping"}
+                  </label>
+                  <Textarea
+                    placeholder={
+                      useAI
+                        ? "Décrivez précisément ce que vous cherchez. Ex: Les horaires d'ouverture, les prix, les coordonnées de contact..."
+                        : "Instructions optionnelles pour le scraping. Ex: Extraire uniquement les titres et descriptions..."
+                    }
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="min-h-[120px] bg-secondary border-border focus:border-accent transition-colors resize-none"
+                    disabled={isLoading}
+                  />
+                  {useAI ? (
+                    <p className="text-xs text-muted-foreground">
+                      L'IA extraira uniquement les informations pertinentes à votre recherche
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Laissez vide pour récupérer tout le contenu brut
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
+                  <div className="flex items-center space-x-3">
+                    <Sparkles className={`w-5 h-5 ${useAI ? "text-accent" : "text-muted-foreground"}`} />
+                    <div>
+                      <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
+                        Reformulation IA
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne le contenu brut"}
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    id="ai-toggle"
+                    checked={useAI}
+                    onCheckedChange={setUseAI}
+                  />
+                </div>
+
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-sm font-medium text-foreground">
@@ -224,51 +269,6 @@ export default function Prompt() {
                       </div>
                     ))}
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border">
-                  <div className="flex items-center space-x-3">
-                    <Sparkles className={`w-5 h-5 ${useAI ? "text-accent" : "text-muted-foreground"}`} />
-                    <div>
-                      <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
-                        Reformulation IA
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {useAI ? "Reformule le contenu avec l'IA" : "Retourne le contenu brut"}
-                      </p>
-                    </div>
-                  </div>
-                  <Switch
-                    id="ai-toggle"
-                    checked={useAI}
-                    onCheckedChange={setUseAI}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground block">
-                    {useAI ? "Que recherchez-vous ?" : "Instructions de scraping"}
-                  </label>
-                  <Textarea
-                    placeholder={
-                      useAI
-                        ? "Décrivez précisément ce que vous cherchez. Ex: Les horaires d'ouverture, les prix, les coordonnées de contact..."
-                        : "Instructions optionnelles pour le scraping. Ex: Extraire uniquement les titres et descriptions..."
-                    }
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[120px] bg-secondary border-border focus:border-accent transition-colors resize-none"
-                    disabled={isLoading}
-                  />
-                  {useAI ? (
-                    <p className="text-xs text-muted-foreground">
-                      L'IA extraira uniquement les informations pertinentes à votre recherche
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      Laissez vide pour récupérer tout le contenu brut
-                    </p>
-                  )}
                 </div>
 
                 <Button
