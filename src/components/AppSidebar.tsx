@@ -37,7 +37,7 @@ export function AppSidebar() {
         </div>
 
         <SidebarGroup className="mt-4">
-          <SidebarGroupLabel className="text-white/70 text-xs uppercase tracking-wider">Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-white/70 text-sm uppercase tracking-wider font-medium">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -46,11 +46,11 @@ export function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end
-                      className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg"
+                      className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3"
                       activeClassName="bg-white/20 text-white font-semibold shadow-lg"
                     >
-                      <item.icon className="w-5 h-5" />
-                      {open && <span>{item.title}</span>}
+                      <item.icon className="w-6 h-6" />
+                      {open && <span className="text-base">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
