@@ -1,4 +1,4 @@
-import { Upload, MessageSquare, Newspaper, Sparkles, Trophy, ChevronDown, Briefcase, Scale } from "lucide-react";
+import { Upload, MessageSquare, Newspaper, Sparkles, Trophy, ChevronDown, Briefcase, Scale, FileText } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -173,6 +173,19 @@ export function AppSidebar() {
                   </CollapsibleContent>
                 </SidebarMenuItem>
               </Collapsible>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/bibliotheque-pdf"
+                    className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3"
+                    activeClassName="bg-white/20 text-white font-semibold shadow-lg"
+                  >
+                    <FileText className="w-6 h-6" />
+                    {open && <span className="text-base">Bibliothèque PDF</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
