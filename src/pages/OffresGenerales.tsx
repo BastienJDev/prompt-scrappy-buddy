@@ -7,6 +7,57 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+const jobSites = [
+  {
+    name: "Indeed",
+    logo: "https://upload.wikimedia.org/wikipedia/commons/f/fc/Indeed_logo.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://fr.indeed.com/jobs?q=${encodeURIComponent(job)}&l=${encodeURIComponent(location)}`
+  },
+  {
+    name: "HelloWork",
+    logo: "https://www.hellowork.com/images/logo-hellowork.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://www.hellowork.com/fr-fr/emploi/recherche.html?k=${encodeURIComponent(job)}&l=${encodeURIComponent(location)}`
+  },
+  {
+    name: "APEC",
+    logo: "https://www.apec.fr/files/live/mounts/images/medias_apec/logo/logo_apec_bleu.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://www.apec.fr/candidat/recherche-emploi.html/emploi?motsCles=${encodeURIComponent(job)}&lieux=${encodeURIComponent(location)}`
+  },
+  {
+    name: "Welcome to the Jungle",
+    logo: "https://www.welcometothejungle.com/assets/images/logos/wttj.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://www.welcometothejungle.com/fr/jobs?query=${encodeURIComponent(job)}&aroundQuery=${encodeURIComponent(location)}`
+  },
+  {
+    name: "Cadremploi",
+    logo: "https://www.cadremploi.fr/assets/images/logos/cadremploi-logo.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://www.cadremploi.fr/emploi/liste_offres?motcle=${encodeURIComponent(job)}&lieu=${encodeURIComponent(location)}`
+  },
+  {
+    name: "Optioncarrière",
+    logo: "https://www.optioncarriere.com/images/optioncarriere-logo.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://www.optioncarriere.com/recherche?s=${encodeURIComponent(job)}&l=${encodeURIComponent(location)}`
+  },
+  {
+    name: "WeAreMeent",
+    logo: "https://wearemeent.com/wp-content/uploads/2023/01/meent-logo.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://wearemeent.com/?s=${encodeURIComponent(job + ' ' + location)}`
+  },
+  {
+    name: "France Travail",
+    logo: "https://candidat.francetravail.fr/dist/img/logo-ft.svg",
+    buildUrl: (job: string, location: string) => 
+      `https://candidat.francetravail.fr/offres/recherche?motsCles=${encodeURIComponent(job)}&offresPartenaires=true&lieu=${encodeURIComponent(location)}`
+  }
+];
+
 interface JobOffer {
   id: string;
   titre: string;
@@ -24,7 +75,14 @@ export default function OffresGenerales() {
   const [isLoading, setIsLoading] = useState(true);
   const [offres, setOffres] = useState<JobOffer[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobTitle, setJobTitle] = useState("");
+  const [location, setLocation] = useState("");
   const { toast } = useToast();
+
+  const handleSiteClick = (site: typeof jobSites[0]) => {
+    const url = site.buildUrl(jobTitle, location);
+    window.open(url, '_blank');
+  };
 
   useEffect(() => {
     loadOffers();
@@ -103,12 +161,79 @@ export default function OffresGenerales() {
             </p>
           </div>
 
+          {/* Recherche sur les sites d'emploi */}
+          <Card className="border-border p-6 space-y-6">
+            <div className="space-y-4">
+              <h2 className="text-xl font-semibold text-foreground">Rechercher sur les sites d'emploi</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Poste recherché</label>
+                  <div className="relative">
+                    <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Ex: Juriste, Avocat, Data Analyst..."
+                      value={jobTitle}
+                      onChange={(e) => setJobTitle(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">Localisation</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Ex: Paris, Lyon, Marseille..."
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Cliquez sur un site pour lancer la recherche :</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {jobSites.map((site) => (
+                  <button
+                    key={site.name}
+                    onClick={() => handleSiteClick(site)}
+                    className="group flex flex-col items-center justify-center p-4 rounded-lg border border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
+                    title={`Rechercher sur ${site.name}`}
+                  >
+                    <div className="h-10 w-full flex items-center justify-center mb-2">
+                      <img
+                        src={site.logo}
+                        alt={site.name}
+                        className="max-h-10 max-w-full object-contain filter grayscale group-hover:grayscale-0 transition-all duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          target.nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                      <span className="hidden text-lg font-semibold text-foreground">{site.name}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
+                      {site.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Filtre des offres France Travail */}
           <Card className="border-border p-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Rechercher par titre, entreprise, localisation ou compétences..."
+                placeholder="Filtrer les offres France Travail ci-dessous..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
