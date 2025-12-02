@@ -27,7 +27,7 @@ const sportJobSites = [
   {
     name: "Myjobsports",
     buildUrl: (job: string, location: string) => 
-      `https://www.myjobsports.com/recherche?q=${encodeURIComponent(job)}&lieu=${encodeURIComponent(location)}`
+      `https://www.myjobsports.com/les-emplois-sports/?s=${encodeURIComponent(job + ' ' + location)}`
   },
   {
     name: "SPORTSJOBS",
