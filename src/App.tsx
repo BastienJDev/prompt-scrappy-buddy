@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Prompt from "./pages/Prompt";
+import Upload from "./pages/Upload";
 import ActualitesGenerales from "./pages/ActualitesGenerales";
 import ActualitesSportives from "./pages/ActualitesSportives";
 import OffresGenerales from "./pages/OffresGenerales";
@@ -54,6 +55,7 @@ const App = () => (
                   <Route path="/sites-juridiques/cairn" element={<Cairn />} />
                   <Route path="/sites-juridiques/francis-lefevre" element={<FrancisLefevre />} />
                   <Route path="/bibliotheque-pdf" element={<BibliotequePDF />} />
+                  <Route path="/gestion-sites" element={<Upload />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

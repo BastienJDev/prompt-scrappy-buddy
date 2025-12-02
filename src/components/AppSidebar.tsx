@@ -1,4 +1,4 @@
-import { Upload, MessageSquare, Newspaper, Sparkles, Trophy, ChevronDown, Briefcase, Scale, FileText } from "lucide-react";
+import { Upload, MessageSquare, Newspaper, Sparkles, Trophy, ChevronDown, Briefcase, Scale, FileText, Home } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -21,7 +21,8 @@ import {
 } from "@/components/ui/collapsible";
 
 const items = [
-  { title: "Accueil", url: "/prompt", icon: MessageSquare },
+  { title: "Accueil", url: "/", icon: Home },
+  { title: "Recherche", url: "/prompt", icon: MessageSquare },
 ];
 
 const actualitesItems = [
@@ -190,8 +191,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink
-                    to="/"
-                    end
+                    to="/gestion-sites"
                     className="hover:bg-white/10 text-white/90 hover:text-white transition-all rounded-lg text-base py-3"
                     activeClassName="bg-white/20 text-white font-semibold shadow-lg"
                   >

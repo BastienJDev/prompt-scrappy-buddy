@@ -1,3 +1,3 @@
-import Upload from "./Upload";
+import Accueil from "./Accueil";
 
-export default Upload;
+export default Accueil;
