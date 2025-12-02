@@ -46,7 +46,7 @@ export const SITE_CONFIGS = {
   },
   francislefebvre: {
     name: "Francis Lefebvre",
-    startUrl: "https://catalogue-bu.u-bourgogne.fr/discovery/dbsearch?vid=33UB_INST:33UB_INST&lang=fr"
+    startUrl: "http://abonnes.efl.fr/portail/portail.do"
   },
   lextenso: {
     name: "La Base Lextenso",
