@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -12,10 +13,10 @@ serve(async (req) => {
 
   try {
     const { messages, pdfContent, isSearch } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!openaiApiKey) {
+      throw new Error("OPENAI_API_KEY is not configured");
     }
 
     console.log("Processing PDF request...", { isSearch });
@@ -61,19 +62,18 @@ Exemple de réponse correcte:
 En jurisprudence, la Cour de cassation a précisé que... [Source: jurisprudence_2024.pdf]"`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        stream: false,
       }),
     });
 
@@ -84,14 +84,14 @@ En jurisprudence, la Cour de cassation a précisé que... [Source: jurisprudence
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (response.status === 402 || response.status === 401) {
         return new Response(
-          JSON.stringify({ error: "Paiement requis, veuillez ajouter des crédits à votre espace Lovable AI." }),
+          JSON.stringify({ error: "Erreur d'authentification. Vérifiez votre clé API OpenAI." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error("OpenAI API error:", response.status, errorText);
       return new Response(
         JSON.stringify({ error: "Erreur du serveur AI" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
