@@ -1,3 +1,4 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
@@ -18,16 +19,16 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("[parse-pdf] Missing Supabase credentials");
       throw new Error("Missing Supabase credentials");
     }
 
-    if (!lovableApiKey) {
-      console.error("[parse-pdf] Missing LOVABLE_API_KEY");
-      throw new Error("Missing LOVABLE_API_KEY");
+    if (!openaiApiKey) {
+      console.error("[parse-pdf] Missing OPENAI_API_KEY");
+      throw new Error("Missing OPENAI_API_KEY");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -60,26 +61,27 @@ serve(async (req) => {
     
     console.log(`[parse-pdf] PDF converted to base64, length: ${base64Pdf.length}`);
 
-    // Use Lovable AI (Gemini) to extract text from PDF
-    console.log(`[parse-pdf] Calling Lovable AI to extract text...`);
+    // Use OpenAI GPT-4o to extract text from PDF (via vision as image)
+    // Note: OpenAI doesn't natively support PDF files, we send as data URL for the model to process
+    console.log(`[parse-pdf] Calling OpenAI to extract text...`);
     
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${lovableApiKey}`,
+        "Authorization": `Bearer ${openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gpt-4o",
         messages: [
           {
             role: "user",
             content: [
               {
-                type: "file",
-                file: {
-                  filename: filePath,
-                  file_data: `data:application/pdf;base64,${base64Pdf}`
+                type: "image_url",
+                image_url: {
+                  url: `data:application/pdf;base64,${base64Pdf}`,
+                  detail: "high"
                 }
               },
               {
@@ -97,30 +99,30 @@ Instructions importantes:
             ]
           }
         ],
-        max_tokens: 100000,
+        max_tokens: 16000,
       }),
     });
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error(`[parse-pdf] AI API error: ${aiResponse.status}`, errorText);
+      console.error(`[parse-pdf] OpenAI API error: ${aiResponse.status}`, errorText);
       
       if (aiResponse.status === 429) {
         throw new Error("Rate limit exceeded. Please try again later.");
       }
-      if (aiResponse.status === 402) {
-        throw new Error("Payment required. Please add credits to your Lovable workspace.");
+      if (aiResponse.status === 402 || aiResponse.status === 401) {
+        throw new Error("Authentication error. Please check your OpenAI API key.");
       }
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
-    console.log(`[parse-pdf] AI response received`);
+    console.log(`[parse-pdf] OpenAI response received`);
 
     const extractedText = aiData.choices?.[0]?.message?.content;
     
     if (!extractedText) {
-      console.error("[parse-pdf] No text extracted from AI response");
+      console.error("[parse-pdf] No text extracted from OpenAI response");
       throw new Error("Failed to extract text from PDF");
     }
 

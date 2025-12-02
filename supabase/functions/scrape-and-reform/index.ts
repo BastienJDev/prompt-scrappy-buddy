@@ -210,22 +210,22 @@ serve(async (req) => {
       );
     }
 
-    // Use Lovable AI to reformulate
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
+    // Use OpenAI to reformulate
+    const openaiApiKey = Deno.env.get("OPENAI_API_KEY");
+    if (!openaiApiKey) {
+      throw new Error("OPENAI_API_KEY not configured");
     }
 
-    console.log(`Calling Lovable AI with ${relevantMatches.length} pre-filtered sources`);
+    console.log(`Calling OpenAI with ${relevantMatches.length} pre-filtered sources`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Authorization": `Bearer ${openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -268,8 +268,15 @@ INSTRUCTIONS:
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("AI API error:", aiResponse.status, errorText);
-      throw new Error(`AI API error: ${aiResponse.status}`);
+      console.error("OpenAI API error:", aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
+        throw new Error("Limite de requêtes dépassée. Réessayez plus tard.");
+      }
+      if (aiResponse.status === 401 || aiResponse.status === 402) {
+        throw new Error("Erreur d'authentification. Vérifiez votre clé API OpenAI.");
+      }
+      throw new Error(`OpenAI API error: ${aiResponse.status}`);
     }
 
     const aiData = await aiResponse.json();
