@@ -84,7 +84,12 @@ export default function BibliotequePDF() {
           continue;
         }
 
-        const filePath = `${Date.now()}-${file.name}`;
+        // Nettoyer le nom de fichier pour éviter les caractères non-ASCII dans les headers
+        const sanitizedFileName = file.name
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "") // Supprimer les accents
+          .replace(/[^a-zA-Z0-9.-]/g, "_"); // Remplacer les caractères spéciaux
+        const filePath = `${Date.now()}-${sanitizedFileName}`;
 
         // Upload to storage
         const { error: uploadError } = await supabase.storage
