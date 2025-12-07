@@ -91,10 +91,14 @@ export default function BibliotequePDF() {
           .replace(/[^a-zA-Z0-9.-]/g, "_"); // Remplacer les caractères spéciaux
         const filePath = `${Date.now()}-${sanitizedFileName}`;
 
-        // Upload to storage
+        // Upload to storage avec options explicites pour éviter les problèmes d'encodage
         const { error: uploadError } = await supabase.storage
           .from("pdfs")
-          .upload(filePath, file);
+          .upload(filePath, file, {
+            contentType: 'application/pdf',
+            cacheControl: '3600',
+            upsert: false
+          });
 
         if (uploadError) throw uploadError;
 
